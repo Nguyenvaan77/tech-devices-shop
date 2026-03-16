@@ -55,10 +55,22 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<ProductResponse> getProducts() {
+        
 
         return productRepository.findAll()
                 .stream()
                 .map(productMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void deleteProduct(Long id) {
+        if(!productRepository.existsById(id)){
+            throw new RuntimeException("Product not found");
+        } else {
+            productRepository.deleteById(id);
+        }
+    }
+
+    
 }
