@@ -17,5 +17,5 @@ public class ProductDTO {
     private BigDecimal price;
     private Double ratingAvg;
     private Integer ratingCount;
-
+    private Long categoryId;
 }

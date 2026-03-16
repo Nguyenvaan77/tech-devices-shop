@@ -18,4 +18,5 @@ public class ProductResponse {
     private BigDecimal price;
     private Double ratingAvg;
     private Integer ratingCount;
+    private Long categoryId;
 }
