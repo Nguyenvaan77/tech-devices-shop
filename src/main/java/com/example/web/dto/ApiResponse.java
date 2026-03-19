@@ -1,44 +1,49 @@
 package com.example.web.dto;
 
+import lombok.Builder;
+import lombok.Getter;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Map;
 
-public class ApiResponse {
+@Getter
+@Builder
+public class ApiResponse <T> {
+    private int status;
+    private String message;
+    private T data;
 
-    public static ResponseEntity<?> success(Object data, String message, int status) {
-
-        return ResponseEntity.status(status).body(
-                Map.of(
-                        "status", status,
-                        "message", message,
-                        "data", data
-                )
-        );
+    // ===== SUCCESS =====
+    public static <T> ApiResponse<T> success(T data, String message, int status) {
+        return ApiResponse.<T>builder()
+                .status(status)
+                .message(message)
+                .data(data)
+                .build();
     }
 
-    public static ResponseEntity<?> success(Object data) {
-
+    public static <T> ApiResponse<T> success(T data) {
         return success(data, "OK", 200);
     }
 
-    public static ResponseEntity<?> created(Object data) {
-
+    public static <T> ApiResponse<T> created(T data) {
         return success(data, "Resource created", 201);
     }
 
-    public static ResponseEntity<?> noContent() {
+    public static <T> ApiResponse<T> noContent() {
 
-        return ResponseEntity.status(204).build();
+        return ApiResponse.<T>builder()
+                .status(204)
+                .message("No content")
+                .build();
     }
 
-    public static ResponseEntity<?> error(String message, int code) {
+    public static <T> ApiResponse<T> error(String message, int status) {
 
-        return ResponseEntity.status(code).body(
-                Map.of(
-                        "code", code,
-                        "message", message
-                )
-        );
+        return ApiResponse.<T>builder()
+                .status(status)
+                .message(message)
+                .data(null)
+                .build();
     }
 }
