@@ -4,6 +4,8 @@ import com.example.web.dto.address.request.CreateAddressRequest;
 import com.example.web.dto.address.response.AddressResponse;
 import com.example.web.entity.Address;
 import com.example.web.entity.User;
+import com.example.web.exception.BadRequestException;
+import com.example.web.exception.ResourceNotFoundException;
 import com.example.web.mapper.AddressMapper;
 import com.example.web.repository.AddressRepository;
 import com.example.web.repository.UserRepository;
@@ -11,12 +13,14 @@ import com.example.web.service.inter.AddressService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class AddressServiceImpl implements AddressService {
 
     private final AddressRepository addressRepository;
@@ -25,12 +29,30 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public AddressResponse createAddress(Long userId, CreateAddressRequest request) {
+        if (userId == null || userId <= 0) {
+            throw new BadRequestException("Invalid user ID");
+        }
+
+        if (request == null) {
+            throw new BadRequestException("Address request cannot be null");
+        }
+
+        if (request.getDetail() == null || request.getDetail().isBlank()) {
+            throw new BadRequestException("Address detail is required");
+        }
+
+        if (request.getProvince() == null || request.getProvince().isBlank()) {
+            throw new BadRequestException("Province is required");
+        }
+
+        if (request.getDistrict() == null || request.getDistrict().isBlank()) {
+            throw new BadRequestException("District is required");
+        }
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         Address address = addressMapper.toEntity(request);
-
         address.setUser(user);
 
         address = addressRepository.save(address);
@@ -39,7 +61,16 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AddressResponse> getUserAddresses(Long userId) {
+        if (userId == null || userId <= 0) {
+            throw new BadRequestException("Invalid user ID");
+        }
+
+        // Verify user exists
+        if (!userRepository.existsById(userId)) {
+            throw new ResourceNotFoundException("User not found with id: " + userId);
+        }
 
         return addressRepository.findByUserId(userId)
                 .stream()
@@ -49,6 +80,13 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public void deleteAddress(Long addressId) {
+        if (addressId == null || addressId <= 0) {
+            throw new BadRequestException("Invalid address ID");
+        }
+
+        if (!addressRepository.existsById(addressId)) {
+            throw new ResourceNotFoundException("Address not found with id: " + addressId);
+        }
 
         addressRepository.deleteById(addressId);
     }

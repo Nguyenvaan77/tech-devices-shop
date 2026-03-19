@@ -4,15 +4,23 @@ import com.example.web.dto.user.request.LoginRequest;
 import com.example.web.dto.user.request.RegisterRequest;
 import com.example.web.dto.user.response.UserResponse;
 import com.example.web.entity.User;
+import com.example.web.exception.BadRequestException;
+import com.example.web.exception.ConflictException;
+import com.example.web.exception.ResourceNotFoundException;
 import com.example.web.mapper.UserMapper;
 import com.example.web.repository.UserRepository;
 import com.example.web.service.inter.UserService;
 
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -20,33 +28,72 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse register(RegisterRequest request) {
+        if (request == null) {
+            throw new BadRequestException("Register request cannot be null");
+        }
+
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new BadRequestException("Email is required");
+        }
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new BadRequestException("Password is required");
+        }
+
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new ConflictException("Email already registered");
+        }
 
         User user = userMapper.toEntity(request);
-
         user = userRepository.save(user);
 
         return userMapper.toResponse(user);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public String login(LoginRequest request) {
+        if (request == null) {
+            throw new BadRequestException("Login request cannot be null");
+        }
+
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new BadRequestException("Email is required");
+        }
+
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new BadRequestException("Password is required");
+        }
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + request.getEmail()));
 
         if (!user.getPasswordHash().equals(request.getPassword())) {
-            throw new RuntimeException("Invalid password");
+            throw new BadRequestException("Invalid password");
         }
 
         return "LOGIN_SUCCESS";
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserResponse getUser(Long id) {
+        if (id == null || id <= 0) {
+            throw new BadRequestException("Invalid user ID");
+        }
 
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         return userMapper.toResponse(user);
+    }
+
+    @Override
+    public List<UserResponse> getAllUsers() {
+
+        return userRepository.findAll()
+                .stream()
+                .map(userMapper::toResponse)
+                .toList();
     }
 }
