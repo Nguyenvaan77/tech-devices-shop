@@ -1,7 +1,7 @@
 package com.example.web.service.imple;
 
-import com.example.web.dto.user.request.LoginRequest;
-import com.example.web.dto.user.request.RegisterRequest;
+import com.example.web.dto.auth.LoginRequest;
+import com.example.web.dto.auth.RegisterRequest;
 import com.example.web.dto.user.response.UserResponse;
 import com.example.web.entity.User;
 import com.example.web.exception.BadRequestException;
@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,9 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
+
+    
 
     @Override
     public UserResponse register(RegisterRequest request) {
@@ -45,6 +50,7 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userMapper.toEntity(request);
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user = userRepository.save(user);
 
         return userMapper.toResponse(user);
@@ -96,4 +102,6 @@ public class UserServiceImpl implements UserService {
                 .map(userMapper::toResponse)
                 .toList();
     }
+
+
 }

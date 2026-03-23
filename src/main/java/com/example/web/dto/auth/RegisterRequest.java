@@ -1,4 +1,4 @@
-package com.example.web.dto.user.request;
+package com.example.web.dto.auth;
 
 import lombok.*;
 
