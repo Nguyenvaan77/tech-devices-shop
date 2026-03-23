@@ -4,6 +4,7 @@ import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.annotation.authentication.configurers.userdetails.UserDetailsAwareConfigurer;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.example.web.entity.User;
 import com.example.web.service.inter.JwtService;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -31,6 +33,17 @@ public class JwtServiceImpl implements JwtService {
         return generateToken(new HashMap<>(), user);
     }
 
+    @Override
+    public String extractUsername(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    @Override
+    public boolean isValid(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return username.equals(userDetails.getUsername());
+    }
+
     private String generateToken(Map<String, Object> claims, UserDetails userDetails) {
         return Jwts.builder()
                 .setClaims(claims)
@@ -44,5 +57,14 @@ public class JwtServiceImpl implements JwtService {
     private Key getKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
+        final Claims claims  = extractAllClaim(token);
+        return claimResolver.apply(claims);
+    }
+
+    private Claims extractAllClaim(String token) {
+        return Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token).getBody();
     }
 }
