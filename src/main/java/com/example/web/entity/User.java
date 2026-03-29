@@ -46,6 +46,9 @@ public class User implements UserDetails{
     @OneToMany(mappedBy = "user")
     private List<Review> reviews;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private Token token;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(() -> "ROLE_" + role);

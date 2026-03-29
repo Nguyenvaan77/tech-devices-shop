@@ -1,6 +1,7 @@
 package com.example.web.service.imple;
 
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import com.example.web.entity.User;
 import com.example.web.service.inter.JwtService;
+import com.example.web.util.TokenEnum;
+import com.fasterxml.jackson.databind.util.TokenBuffer;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -28,43 +31,113 @@ public class JwtServiceImpl implements JwtService {
     @Value("${jwt.secret-key}")
     private String secretKey;
 
+    @Value("${jwt.refresh-key}")
+    private String refreshKey;
+
+    @Value("${jwt.reset-password-key}")
+    private String resetPasswordKey;
+
+    @Value("${jwt.expiryDay}")
+    private long expiryDay;
+
+    @Value("${jwt.expiryHour}")
+    private long expiryHour;
+
     @Override
-    public String generateToken(UserDetails user) {
-        return generateToken(new HashMap<>(), user);
+    public String generateAccessToken(UserDetails user) {
+        return generateAccessToken(new HashMap<>(), user);
     }
 
     @Override
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+    public String generateRefreshToken(UserDetails user) {
+        return generateRefreshToken(new HashMap<>(), user);
     }
 
     @Override
-    public boolean isValid(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername());
+    public String generateResetPasswordToken(UserDetails user) {
+        return generateResetPasswordToken(new HashMap<>(), user);
     }
 
-    private String generateToken(Map<String, Object> claims, UserDetails userDetails) {
+    @Override
+    public String extractUsername(String token, TokenEnum tokenEnum) {
+        return extractClaim(token, tokenEnum, Claims::getSubject);
+    }
+
+    @Override
+    public Date extractTokenExpired(String token, TokenEnum tokenEnum) {
+        return extractClaim(token, tokenEnum, Claims::getExpiration);
+    }
+
+    @Override
+    public boolean isValid(String token, TokenEnum tokenEnum, UserDetails userDetails) {
+        final String username = extractUsername(token, tokenEnum);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token, tokenEnum));
+    }
+
+    private boolean isTokenExpired(String token, TokenEnum tokenEnum) {
+        return extractTokenExpired(token, tokenEnum).before(new Date());
+    }
+
+    private String generateAccessToken(Map<String, Object> claims, UserDetails userDetails) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 1))
-                .signWith(getKey(), SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expiryHour))
+                .signWith(getKey(TokenEnum.ACCESS_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
-    
-    private Key getKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+
+    private String generateRefreshToken(Map<String, Object> claims, UserDetails userDetails) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * expiryDay))
+                .signWith(getKey(TokenEnum.REFRESH_TOKEN), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    private String generateResetPasswordToken(Map<String, Object> claims, UserDetails userDetails) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * expiryDay))
+                .signWith(getKey(TokenEnum.RESET_TOKEN), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    private Key getKey(TokenEnum tokenEnum) {
+        byte[] keyBytes;
+
+        switch (tokenEnum) {
+            case ACCESS_TOKEN:
+                keyBytes = Decoders.BASE64.decode(secretKey);
+                break;
+            case REFRESH_TOKEN:
+                keyBytes = Decoders.BASE64.decode(refreshKey);
+                break;
+            case RESET_TOKEN:
+                keyBytes = Decoders.BASE64.decode(resetPasswordKey);
+                break;
+
+            default:
+                throw new IllegalArgumentException("Invalid token type");
+        }
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
-        final Claims claims  = extractAllClaim(token);
+    private <T> T extractClaim(String token, TokenEnum tokenEnum, Function<Claims, T> claimResolver) {
+        final Claims claims = extractAllClaim(token, tokenEnum);
         return claimResolver.apply(claims);
     }
 
-    private Claims extractAllClaim(String token) {
-        return Jwts.parserBuilder().setSigningKey(getKey()).build().parseClaimsJws(token).getBody();
+    private Claims extractAllClaim(String token, TokenEnum tokenEnum) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getKey(tokenEnum))
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }
