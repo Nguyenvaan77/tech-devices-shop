@@ -10,6 +10,8 @@ import com.example.web.exception.BadRequestException;
 import com.example.web.exception.ResourceNotFoundException;
 import com.example.web.mapper.ProductMapper;
 import com.example.web.repository.ProductRepository;
+import com.example.web.repository.CategoryRepository;
+import com.example.web.repository.UserRepository;
 import com.example.web.service.inter.ProductService;
 import com.example.web.specification.ProductSpecification;
 
@@ -18,9 +20,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,6 +35,8 @@ import java.util.stream.Collectors;
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
     private final ProductMapper productMapper;
 
     @Override
@@ -42,11 +49,25 @@ public class ProductServiceImpl implements ProductService {
             throw new BadRequestException("Product name is required");
         }
 
-        if (request.getPrice() == null || request.getPrice().signum() <= 0) {
-            throw new BadRequestException("Product price must be greater than 0");
+        if (request.getCategoryId() == null || request.getCategoryId() <= 0) {
+            throw new BadRequestException("Category ID is required");
         }
 
+        // Get current user (business owner)
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        com.example.web.entity.User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+
+        // Load category
+        com.example.web.entity.Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
+
+        // Create product
         Product product = productMapper.toEntity(request);
+        product.setBusinessOwner(user);
+        product.setCategory(category);
+        product.setCreatedAt(LocalDateTime.now());
         product = productRepository.save(product);
 
         return productMapper.toResponse(product);
@@ -66,10 +87,6 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
         productMapper.updateEntity(request, product);
-
-        if (product.getPrice() != null && product.getPrice().signum() <= 0) {
-            throw new BadRequestException("Product price must be greater than 0");
-        }
 
         product = productRepository.save(product);
 

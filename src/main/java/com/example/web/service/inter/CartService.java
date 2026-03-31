@@ -4,10 +4,13 @@ import com.example.web.dto.cart.request.AddToCartRequest;
 import com.example.web.dto.cart.response.CartResponse;
 
 public interface CartService {
+    CartResponse getCurrentCart();
 
-    CartResponse getCart(Long userId);
+    CartResponse addToCart(AddToCartRequest request);
 
-    CartResponse addToCart(Long userId, AddToCartRequest request);
+    CartResponse removeFromCart(Long cartItemId);
 
-    CartResponse removeFromCart(Long userId, Long productId);
+    CartResponse updateCartItemQuantity(Long cartItemId, Integer quantity);
+
+    void clearCart();
 }

@@ -16,7 +16,7 @@ public interface UserMapper {
     UserResponse toResponse(User entity);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "addresses", ignore = true)
+    // @Mapping(target = "addresses", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "orders", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
@@ -25,7 +25,7 @@ public interface UserMapper {
     User toEntity(UserDTO dto);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "addresses", ignore = true)
+    // @Mapping(target = "addresses", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "orders", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)

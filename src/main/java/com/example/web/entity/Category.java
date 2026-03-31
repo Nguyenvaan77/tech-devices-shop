@@ -22,6 +22,8 @@ public class Category {
 
     private String slug;
 
+    private Boolean isDeleted;
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parent;

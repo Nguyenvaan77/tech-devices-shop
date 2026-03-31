@@ -17,7 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User implements UserDetails{
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,7 +26,6 @@ public class User implements UserDetails{
     @Column(nullable = false, unique = true)
     private String email;
 
-    // @Column(nullable = false)
     private String passwordHash;
 
     private String fullName;
@@ -35,10 +34,15 @@ public class User implements UserDetails{
 
     private String role;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "user")
-    private List<Address> addresses;
+    @ManyToOne
+    @JoinColumn(name = "address_id")
+    private Address address;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isDeleted = false;
 
     @OneToMany(mappedBy = "user")
     private List<Order> orders;
@@ -48,6 +52,9 @@ public class User implements UserDetails{
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Token token;
+
+    @OneToMany(mappedBy = "businessOwner")
+    private List<Product> products;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -66,25 +73,21 @@ public class User implements UserDetails{
 
     @Override
     public boolean isAccountNonExpired() {
-        // TODO Auto-generated method stub
         return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        // TODO Auto-generated method stub
         return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        // TODO Auto-generated method stub
         return true;
     }
 
     @Override
     public boolean isEnabled() {
-        // TODO Auto-generated method stub
-        return true;
+        return !isDeleted;
     }
 }

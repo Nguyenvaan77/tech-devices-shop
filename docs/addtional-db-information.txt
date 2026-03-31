@@ -1,0 +1,247 @@
+// Tech Device Shop - Database Schema (Completed FK)
+
+Table roles {
+  id bigint [primary key, increment]
+  email varchar [not null, unique]
+  password_hash varchar
+  full_name varchar
+  phone varchar
+  role varchar
+  created_at timestamp
+}
+
+Table users {
+  id bigint [primary key, increment]
+  email varchar [not null, unique]
+  password_hash varchar
+  full_name varchar
+  phone varchar
+  role varchar
+  created_at timestamp
+  address_id bigint [not null]
+  is_deleted boolean
+}
+
+Table addresses {
+  id bigint [primary key, increment]
+  receiver_name varchar
+  phone varchar
+  province varchar
+  district varchar
+  ward varchar
+  detail varchar
+}
+
+Table carts {
+  id bigint [primary key, increment]
+  created_at timestamp
+  user_id bigint [unique, not null]
+}
+
+Table cart_items {
+  id bigint [primary key, increment]
+  quantity int
+  cart_id bigint [not null]
+  product_item_id bigint [not null]
+}
+
+Table categories {
+  id bigint [primary key, increment]
+  name varchar
+  slug varchar
+  parent_id bigint
+  is_deleted boolean
+}
+
+Table brands {
+  id bigint [primary key, increment]
+  name varchar
+  description varchar
+}
+
+Table products {
+  id bigint [primary key, increment]
+  name varchar
+  brand_id bigint
+  specifications jsonb
+  description text
+  status varchar
+  rating_avg double
+  review_count int
+  created_at timestamp
+  updated_at timestamp
+  is_deleted boolean
+  category_id bigint [not null]
+}
+
+Table product_items {
+  id bigint [primary key, increment]
+  product_id bigint
+  product_code varchar
+  original_price decimal
+  sale_price decimal
+}
+
+Table product_images {
+  id bigint [primary key, increment]
+  image_url varchar
+  is_main boolean
+  product_id bigint [not null]
+}
+
+Table product_videos {
+  id bigint [primary key, increment]
+  video_url varchar
+  is_main boolean
+  product_id bigint [not null]
+}
+
+Table orders {
+  id bigint [primary key, increment]
+  total_price decimal
+  status varchar
+  payment_method varchar
+  created_at timestamp
+  user_id bigint [not null]
+  address_id bigint [not null]
+}
+
+Table order_items {
+  id bigint [primary key, increment]
+  quantity int
+  price decimal
+  order_id bigint [not null]
+  product_item_id bigint [not null]
+}
+
+Table payments {
+  id bigint [primary key, increment]
+  provider varchar
+  transaction_id varchar
+  amount decimal
+  status varchar
+  created_at timestamp
+  order_id bigint [unique, not null]
+}
+
+Table reviews {
+  id bigint [primary key, increment]
+  rating int
+  comment text
+  created_at timestamp
+  updated_at timestamp
+  product_id bigint [not null]
+  user_id bigint [not null]
+
+  Indexes {
+    (user_id, product_id) [unique]
+  }
+}
+
+Table review_images {
+  id bigint [primary key, increment]
+  image_url varchar
+  review_id bigint [not null]
+}
+
+Table token {
+  id bigint [primary key, increment]
+  access_token varchar
+  refresh_token varchar
+  user_id bigint [unique, not null]
+}
+
+Table email_logs {
+  id bigint [primary key, increment]
+  email varchar
+  subject varchar
+  status varchar
+  sent_at timestamp
+  user_id bigint [not null]
+}
+
+Table attribute_type {
+  id bigint [primary key, increment]
+  name varchar
+}
+
+Table product_item_has_attribute_type {
+  id bigint [primary key, increment]
+  product_item_id bigint
+  attribute_type_id bigint
+
+  Indexes {
+    (product_item_id, attribute_type_id) [unique]
+  }
+}
+
+Table product_option {
+  id bigint [primary key, increment]
+  product_item_has_attribute_type_id bigint
+  value_option varchar
+  quantity_in_stock int
+
+  Indexes {
+    (product_item_has_attribute_type_id, value_option) [unique]
+  }
+}
+
+Table sales {
+  id bigint [primary key, increment]
+  code varchar
+  type enum[coupon, ship]
+}
+
+Table product_sale {
+  id bigint [primary key, increment]
+  product_id int
+  sale_id int
+  value int
+  isActive boolean
+}
+
+//////////////////////////////////////////////////////
+// RELATIONSHIPS (FULLY COMPLETED)
+//////////////////////////////////////////////////////
+
+Ref: users.address_id > addresses.id
+
+Ref: carts.user_id - users.id
+
+Ref: cart_items.cart_id > carts.id
+Ref: cart_items.product_item_id > product_items.id
+
+Ref: categories.parent_id > categories.id
+
+Ref: products.category_id > categories.id
+Ref: products.brand_id > brands.id
+
+Ref: product_items.product_id > products.id
+
+Ref: product_images.product_id > products.id
+Ref: product_videos.product_id > products.id
+
+Ref: orders.user_id > users.id
+Ref: orders.address_id > addresses.id
+
+Ref: order_items.order_id > orders.id
+Ref: order_items.product_item_id > product_items.id
+
+Ref: payments.order_id - orders.id
+
+Ref: reviews.user_id > users.id
+Ref: reviews.product_id > products.id
+
+Ref: review_images.review_id > reviews.id
+
+Ref: token.user_id - users.id
+
+Ref: email_logs.user_id > users.id
+
+Ref: product_item_has_attribute_type.product_item_id > product_items.id
+Ref: product_item_has_attribute_type.attribute_type_id > attribute_type.id
+
+Ref: product_option.product_item_has_attribute_type_id > product_item_has_attribute_type.id
+
+Ref: product_sale.product_id > products.id
+Ref: product_sale.sale_id > sales.id

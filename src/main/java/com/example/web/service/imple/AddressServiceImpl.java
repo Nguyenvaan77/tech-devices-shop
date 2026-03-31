@@ -79,6 +79,38 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    public AddressResponse updateAddress(Long id, CreateAddressRequest request) {
+        if (id == null || id <= 0) {
+            throw new BadRequestException("Invalid address ID");
+        }
+
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + id));
+
+        if (request.getReceiverName() != null) {
+            address.setReceiverName(request.getReceiverName());
+        }
+        if (request.getPhone() != null) {
+            address.setPhone(request.getPhone());
+        }
+        if (request.getProvince() != null) {
+            address.setProvince(request.getProvince());
+        }
+        if (request.getDistrict() != null) {
+            address.setDistrict(request.getDistrict());
+        }
+        if (request.getWard() != null) {
+            address.setWard(request.getWard());
+        }
+        if (request.getDetail() != null) {
+            address.setDetail(request.getDetail());
+        }
+
+        address = addressRepository.save(address);
+        return addressMapper.toResponse(address);
+    }
+
+    @Override
     public void deleteAddress(Long addressId) {
         if (addressId == null || addressId <= 0) {
             throw new BadRequestException("Invalid address ID");

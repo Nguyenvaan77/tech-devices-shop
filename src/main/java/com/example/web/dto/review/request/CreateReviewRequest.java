@@ -8,9 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CreateReviewRequest {
-
-    private Long productId;
     private Integer rating;
     private String comment;
-
 }

@@ -14,6 +14,7 @@ import org.mapstruct.ReportingPolicy;
 public interface ProductMapper {
 
     @Mapping(source = "category.id", target = "categoryId")
+    @Mapping(source = "businessOwner.id", target = "businessOwnerId")
     ProductResponse toResponse(Product product);
 
     @Mapping(target = "id", ignore = true)
@@ -25,21 +26,28 @@ public interface ProductMapper {
     Product toEntity(ProductDTO dto);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "businessOwner", ignore = true)
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "items", ignore = true)
     @Mapping(target = "images", ignore = true)
+    @Mapping(target = "videos", ignore = true)
     @Mapping(target = "reviews", ignore = true)
+    @Mapping(target = "sales", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "status", ignore = true)
     @Mapping(target = "ratingAvg", ignore = true)
-    @Mapping(target = "ratingCount", ignore = true)
+    @Mapping(target = "reviewCount", ignore = true)
     Product toEntity(CreateProductRequest request);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "businessOwner", ignore = true)
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "items", ignore = true)
     @Mapping(target = "images", ignore = true)
+    @Mapping(target = "videos", ignore = true)
     @Mapping(target = "reviews", ignore = true)
+    @Mapping(target = "sales", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "ratingAvg", ignore = true)
-    @Mapping(target = "ratingCount", ignore = true)
+    @Mapping(target = "reviewCount", ignore = true)
     Product updateEntity(UpdateProductRequest request, @MappingTarget Product entity);
 }

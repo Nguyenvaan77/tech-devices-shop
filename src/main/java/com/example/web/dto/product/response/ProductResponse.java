@@ -2,7 +2,7 @@ package com.example.web.dto.product.response;
 
 import lombok.*;
 
-import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -10,13 +10,15 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class ProductResponse {
-
     private Long id;
     private String name;
-    private String brand;
+    private String specifications;
     private String description;
-    private BigDecimal price;
+    private String status;
     private Double ratingAvg;
-    private Integer ratingCount;
+    private Integer reviewCount;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private Long categoryId;
+    private Long businessOwnerId;
 }

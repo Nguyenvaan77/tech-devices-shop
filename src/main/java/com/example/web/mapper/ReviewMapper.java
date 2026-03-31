@@ -11,7 +11,12 @@ import org.mapstruct.ReportingPolicy;
 public interface ReviewMapper {
 
     @Mapping(source = "user.id", target = "userId")
-    @Mapping(source = "user.fullName", target = "userName")
+    // @Mapping(source = "user.fullName", target = "userName")
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "productId", ignore = true)
+    @Mapping(target = "rating", ignore = true)
+    @Mapping(target = "comment", ignore = true)
     ReviewResponse toResponse(Review entity);
 
     @Mapping(target = "id", ignore = true)

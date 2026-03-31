@@ -81,7 +81,7 @@ public class AuthServiceImpl implements AuthService {
     public TokenResponse refresh(HttpServletRequest request) {
         String refreshToken = request.getHeader("x-token");
 
-        if (org.apache.commons.lang3.StringUtils.isBlank(refreshToken)) {
+        if (StringUtil.isNullOrEmpty(refreshToken)) {
             throw new RuntimeException("x-token must not be blank");
         }
 

@@ -1,6 +1,7 @@
 package com.example.web.service.imple;
 
 import com.example.web.dto.review.request.CreateReviewRequest;
+import com.example.web.dto.review.request.UpdateReviewRequest;
 import com.example.web.dto.review.response.ReviewResponse;
 import com.example.web.entity.Product;
 import com.example.web.entity.Review;
@@ -12,11 +13,13 @@ import com.example.web.repository.ProductRepository;
 import com.example.web.repository.ReviewRepository;
 import com.example.web.repository.UserRepository;
 import com.example.web.service.inter.ReviewService;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,17 +34,13 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewMapper reviewMapper;
 
     @Override
-    public ReviewResponse createReview(Long userId, CreateReviewRequest request) {
-        if (userId == null || userId <= 0) {
-            throw new BadRequestException("Invalid user ID");
+    public ReviewResponse createReview(Long productId, CreateReviewRequest request) {
+        if (productId == null || productId <= 0) {
+            throw new BadRequestException("Invalid product ID");
         }
 
         if (request == null) {
             throw new BadRequestException("Review request cannot be null");
-        }
-
-        if (request.getProductId() == null || request.getProductId() <= 0) {
-            throw new BadRequestException("Invalid product ID");
         }
 
         if (request.getRating() == null || request.getRating() < 1 || request.getRating() > 5) {
@@ -52,19 +51,23 @@ public class ReviewServiceImpl implements ReviewService {
             throw new BadRequestException("Comment is required");
         }
 
-        Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
-        Review review = reviewMapper.toEntity(request);
-        review.setProduct(product);
-        review.setUser(user);
+        Review review = Review.builder()
+                .rating(request.getRating())
+                .comment(request.getComment())
+                .product(product)
+                .user(user)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         review = reviewRepository.save(review);
-
         return reviewMapper.toResponse(review);
     }
 
@@ -75,7 +78,6 @@ public class ReviewServiceImpl implements ReviewService {
             throw new BadRequestException("Invalid product ID");
         }
 
-        // Verify product exists
         if (!productRepository.existsById(productId)) {
             throw new ResourceNotFoundException("Product not found with id: " + productId);
         }
@@ -84,5 +86,33 @@ public class ReviewServiceImpl implements ReviewService {
                 .stream()
                 .map(reviewMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ReviewResponse updateReview(Long id, UpdateReviewRequest request) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + id));
+
+        if (request.getRating() != null) {
+            if (request.getRating() < 1 || request.getRating() > 5) {
+                throw new BadRequestException("Rating must be between 1 and 5");
+            }
+            review.setRating(request.getRating());
+        }
+
+        if (request.getComment() != null) {
+            review.setComment(request.getComment());
+        }
+
+        review.setUpdatedAt(LocalDateTime.now());
+        Review updated = reviewRepository.save(review);
+        return reviewMapper.toResponse(updated);
+    }
+
+    @Override
+    public void deleteReview(Long id) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + id));
+        reviewRepository.delete(review);
     }
 }

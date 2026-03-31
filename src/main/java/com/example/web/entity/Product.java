@@ -3,7 +3,6 @@ package com.example.web.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,28 +21,46 @@ public class Product {
 
     private String name;
 
-    private String brand;
+    @ManyToOne
+    @JoinColumn(name = "business_id")
+    private User businessOwner;
+
+    @Column(columnDefinition = "JSONB")
+    private String specifications;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    private BigDecimal price;
-
     private String status;
 
-    private Double ratingAvg;
+    private Double ratingAvg = 0.0;
 
-    private Integer ratingCount;
+    private Integer reviewCount = 0;
 
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    private LocalDateTime updatedAt;
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean isDeleted = false;
+
     @ManyToOne
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductItem> items;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVideo> videos;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductSale> sales;
 }
