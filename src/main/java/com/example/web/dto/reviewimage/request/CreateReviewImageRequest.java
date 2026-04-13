@@ -8,5 +8,10 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CreateReviewImageRequest {
-    private String imageUrl;
+    private String bucketName;
+    private String originalFileName;
+    private String fileName;
+    private long fileSize;
+    private String contentType;
+    private String publicUrl;
 }

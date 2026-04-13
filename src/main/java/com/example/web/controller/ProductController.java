@@ -45,6 +45,7 @@ public class ProductController {
         public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
                         @RequestBody CreateProductRequest request) {
                 ProductResponse product = productService.createProduct(request);
+                
                 return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.created(product));
         }
 

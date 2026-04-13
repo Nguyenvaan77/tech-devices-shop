@@ -14,24 +14,27 @@ import com.example.web.repository.AddressRepository;
 import com.example.web.repository.UserRepository;
 import com.example.web.service.inter.UserService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     public UserResponse register(RegisterRequest request) {
@@ -90,10 +93,29 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("Invalid user ID");
         }
 
+        String cacheKey = "users:" + id;
+        LinkedHashMap linkedHashMap = (LinkedHashMap) redisTemplate.opsForValue().get(cacheKey);
+        UserResponse cachedUser = null;
+        if (linkedHashMap != null) {
+            cachedUser = new UserResponse();
+            cachedUser.setId(((Number) linkedHashMap.get("id")).longValue());
+            cachedUser.setEmail((String) linkedHashMap.get("email"));
+            cachedUser.setFullName((String) linkedHashMap.get("fullName"));
+            cachedUser.setPhone((String) linkedHashMap.get("phone"));
+            // cachedUser.setRole((String) linkedHashMap.get("role"));
+            // Note: Address and other nested objects would require additional mapping
+        }
+
+        if (cachedUser != null) {
+            return cachedUser;
+        }
+
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
-        return userMapper.toResponse(user);
+        UserResponse response = userMapper.toResponse(user);
+        redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(10));
+        return response;
     }
 
     @Override
@@ -114,10 +136,19 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
-        return userRepository.findAll()
+        String cacheKey = "users:all";
+        @SuppressWarnings("unchecked")
+        List<UserResponse> cachedUsers = (List<UserResponse>) redisTemplate.opsForValue().get(cacheKey);
+        if (cachedUsers != null) {
+            return cachedUsers;
+        }
+
+        List<UserResponse> users = userRepository.findAll()
                 .stream()
                 .map(userMapper::toResponse)
                 .toList();
+        redisTemplate.opsForValue().set(cacheKey, users, Duration.ofMinutes(10));
+        return users;
     }
 
     @Override
@@ -141,7 +172,10 @@ public class UserServiceImpl implements UserService {
         }
 
         User updated = userRepository.save(user);
-        return userMapper.toResponse(updated);
+        UserResponse response = userMapper.toResponse(updated);
+        String cacheKey = "users:" + id;
+        redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(10));
+        return response;
     }
 
     @Override
@@ -150,5 +184,9 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         user.setIsDeleted(true);
         userRepository.save(user);
+        String cacheKey = "users:" + id;
+        redisTemplate.delete(cacheKey);
+        // Also clear all users cache
+        redisTemplate.delete("users:all");
     }
 }

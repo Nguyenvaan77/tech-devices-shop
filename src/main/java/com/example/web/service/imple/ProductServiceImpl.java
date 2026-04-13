@@ -12,6 +12,7 @@ import com.example.web.mapper.ProductMapper;
 import com.example.web.repository.ProductRepository;
 import com.example.web.repository.CategoryRepository;
 import com.example.web.repository.UserRepository;
+import com.example.web.service.inter.FileStorageService;
 import com.example.web.service.inter.ProductService;
 import com.example.web.specification.ProductSpecification;
 
@@ -33,6 +34,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class ProductServiceImpl implements ProductService {
+
+    private final FileStorageService fileStorageService;
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;

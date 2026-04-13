@@ -1,6 +1,7 @@
 package com.example.web.service.imple;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -50,6 +51,23 @@ public class AuthServiceImpl implements AuthService {
 
     private final TokenRepository tokenRepository;
     private final UserRepository userRepository;
+
+    @Override
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder
+                .getContext()
+                .getAuthentication();
+
+        String email = authentication.getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+    }
+
+    @Override
+    public Long getCurrentUserId() {
+        return getCurrentUser().getId();
+    }
 
     @Override
     public TokenResponse authenticate(LoginRequest loginRequest) {
@@ -134,17 +152,18 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public String forgotPassword(String email) {
-        //Check email existing
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found by this Email"));
+        // Check email existing
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found by this Email"));
 
-        //Check user active
-        if(!user.isEnabled()) {
+        // Check user active
+        if (!user.isEnabled()) {
             throw new RuntimeException("User is not active");
         }
 
         String resetPasswordToken = jwtService.generateResetPasswordToken(user);
 
-        //Send email confirmlink 
+        // Send email confirmlink
         String confirmLink = "http://localhost:8080/auth/reset-password";
 
         return "Sent!";
@@ -157,7 +176,7 @@ public class AuthServiceImpl implements AuthService {
         final String email = jwtService.extractUsername(secretKey, TokenEnum.RESET_TOKEN);
         User user = (User) customUserDetailService.userDetailsService().loadUserByUsername(email);
 
-        if(!jwtService.isValid(secretKey, TokenEnum.RESET_TOKEN, user)) {
+        if (!jwtService.isValid(secretKey, TokenEnum.RESET_TOKEN, user)) {
             throw new RuntimeException("This user is invalid by expired time");
         }
 
@@ -170,12 +189,12 @@ public class AuthServiceImpl implements AuthService {
         final String email = jwtService.extractUsername(request.getSecretKey(), TokenEnum.RESET_TOKEN);
         User user = (User) customUserDetailService.userDetailsService().loadUserByUsername(email);
 
-        if(!jwtService.isValid(request.getSecretKey(), TokenEnum.RESET_TOKEN, user)) {
+        if (!jwtService.isValid(request.getSecretKey(), TokenEnum.RESET_TOKEN, user)) {
             throw new RuntimeException("This user is invalid by expired time");
         }
         // xong phần xác thực
 
-        if(!request.getPassword().equals(request.getConfirmPassword())) {
+        if (!request.getPassword().equals(request.getConfirmPassword())) {
             throw new RuntimeException("ConfirmPassword don't match with password");
         }
 

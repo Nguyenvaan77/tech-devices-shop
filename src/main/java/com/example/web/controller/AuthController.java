@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.web.dto.ApiResponse;
 import com.example.web.dto.TokenResponse;
-import com.example.web.dto.dummyDto;
 import com.example.web.dto.auth.LoginRequest;
 import com.example.web.dto.auth.RegisterRequest;
 import com.example.web.dto.auth.reset.ResetPasswordRequest;

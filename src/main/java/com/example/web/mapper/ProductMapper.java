@@ -15,6 +15,7 @@ public interface ProductMapper {
 
     @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "businessOwner.id", target = "businessOwnerId")
+    @Mapping(source = "images", target = "images")
     ProductResponse toResponse(Product product);
 
     @Mapping(target = "id", ignore = true)
@@ -23,6 +24,7 @@ public interface ProductMapper {
     @Mapping(target = "reviews", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "status", ignore = true)
+
     Product toEntity(ProductDTO dto);
 
     @Mapping(target = "id", ignore = true)
@@ -50,4 +52,10 @@ public interface ProductMapper {
     @Mapping(target = "ratingAvg", ignore = true)
     @Mapping(target = "reviewCount", ignore = true)
     Product updateEntity(UpdateProductRequest request, @MappingTarget Product entity);
+
+    // entity to dto
+    @Mapping(source = "category.id", target = "categoryId")
+    @Mapping(source = "businessOwner.id", target = "businessOwnerId")
+    @Mapping(source = "images", target = "images")
+    ProductDTO toDTO(Product entity);
 }

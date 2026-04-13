@@ -17,8 +17,8 @@ public class CartController {
         private final CartService cartService;
 
         @GetMapping
-        public ResponseEntity<ApiResponse<CartResponse>> getCart() {
-                CartResponse cart = cartService.getCurrentCart();
+        public ResponseEntity<ApiResponse<CartResponse>> getCart(@RequestParam Long userId) {
+                CartResponse cart = cartService.getCurrentCart(userId);
                 return ResponseEntity.ok(ApiResponse.success(cart));
         }
 

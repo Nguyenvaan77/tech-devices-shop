@@ -8,6 +8,11 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class CreateProductImageRequest {
-    private String imageUrl;
-    private Boolean isMain = false;
+    private String bucketName;
+    private String originalFileName;
+    private String fileName;
+    private long fileSize;
+    private String contentType;
+    private String publicUrl;
+    private Long productId;
 }

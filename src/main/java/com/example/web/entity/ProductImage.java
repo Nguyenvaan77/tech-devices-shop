@@ -16,9 +16,17 @@ public class ProductImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String imageUrl;
+    private String bucketName;
 
-    private Boolean isMain;
+    private String originalFileName;
+
+    private String fileName;
+
+    private long fileSize;
+
+    private String contentType;
+
+    private String publicUrl;
 
     @ManyToOne
     @JoinColumn(name = "product_id")

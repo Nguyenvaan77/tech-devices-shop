@@ -1,5 +1,7 @@
 package com.example.web.service.imple;
 
+import com.example.web.dto.product.ProductDTO;
+import com.example.web.dto.productimage.ProductImageDto;
 import com.example.web.dto.productimage.request.CreateProductImageRequest;
 import com.example.web.dto.productimage.response.ProductImageResponse;
 import com.example.web.entity.Product;
@@ -23,6 +25,13 @@ public class ProductImageServiceImpl implements ProductImageService {
     private final ProductImageMapper productImageMapper;
 
     @Override
+    public ProductImageDto findById(Long id) {
+        ProductImage productImage = productImageRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ProductImage not found with id: " + id));
+        return productImageMapper.toDto(productImage);
+    }
+
+    @Override
     public ProductImageResponse create(Long productId, CreateProductImageRequest request) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
@@ -34,10 +43,33 @@ public class ProductImageServiceImpl implements ProductImageService {
         return productImageMapper.toResponse(saved);
     }
 
+    
+
+    @Override
+    public ProductImage create(ProductImageDto dto) {
+        Product product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + dto.getProductId()));
+
+        ProductImage productImage = productImageMapper.toEntity(dto);
+        productImage.setProduct(product);
+
+        return productImageRepository.save(productImage);
+    }
+
+
+
     @Override
     public void delete(Long id) {
         ProductImage productImage = productImageRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ProductImage not found with id: " + id));
         productImageRepository.delete(productImage);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        if (!productImageRepository.existsById(id)) {
+            throw new ResourceNotFoundException("ProductImage not found with id: " + id);
+        }
+        productImageRepository.deleteById(id);
     }
 }

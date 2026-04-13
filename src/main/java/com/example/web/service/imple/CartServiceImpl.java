@@ -13,12 +13,17 @@ import com.example.web.repository.CartItemRepository;
 import com.example.web.repository.CartRepository;
 import com.example.web.repository.ProductItemRepository;
 import com.example.web.repository.UserRepository;
+import com.example.web.service.inter.AuthService;
 import com.example.web.service.inter.CartService;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -31,20 +36,25 @@ public class CartServiceImpl implements CartService {
         private final UserRepository userRepository;
         private final CartMapper cartMapper;
 
+        private final AuthService authService;
+        private final RedisTemplate<String, Object> redisTemplate;
+
         @Override
         @Transactional(readOnly = true)
-        public CartResponse getCurrentCart() {
-                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-                String email = authentication.getName();
-                User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "User not found with email: " + email));
+        public CartResponse getCurrentCart(Long userId) {
+                String cacheKey = "cart:user:" + userId;
+                CartResponse cachedCart = (CartResponse) redisTemplate.opsForValue().get(cacheKey);
+                if (cachedCart != null) {
+                        return cachedCart;
+                }
 
-                Cart cart = cartRepository.findByUserId(user.getId())
+                Cart cart = cartRepository.findByUserId(userId)
                                 .orElseThrow(() -> new ResourceNotFoundException(
-                                                "Cart not found for user: " + user.getId()));
+                                                "Cart not found for user: " + userId));
 
-                return cartMapper.toResponse(cart);
+                CartResponse response = cartMapper.toResponse(cart);
+                redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(10));
+                return response;
         }
 
         @Override
@@ -83,7 +93,10 @@ public class CartServiceImpl implements CartService {
 
                 cartItemRepository.save(item);
 
-                return cartMapper.toResponse(cart);
+                CartResponse response = cartMapper.toResponse(cart);
+                String cacheKey = "cart:user:" + user.getId();
+                redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(10));
+                return response;
         }
 
         @Override

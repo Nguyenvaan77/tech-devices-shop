@@ -3,6 +3,10 @@ package com.example.web.dto.product.response;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.example.web.dto.productimage.ProductImageDto;
 
 @Getter
 @Setter
@@ -21,4 +25,5 @@ public class ProductResponse {
     private LocalDateTime updatedAt;
     private Long categoryId;
     private Long businessOwnerId;
+    private List<ProductImageDto> images = new ArrayList<>();
 }

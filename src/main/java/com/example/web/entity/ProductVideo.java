@@ -16,9 +16,12 @@ public class ProductVideo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String videoUrl;
-
-    private Boolean isMain = false;
+    private String bucketName;
+    private String originalFileName;
+    private String fileName;
+    private long fileSize;
+    private String contentType;
+    private String publicUrl;
 
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)

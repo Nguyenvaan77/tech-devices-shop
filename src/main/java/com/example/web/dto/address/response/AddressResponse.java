@@ -8,7 +8,6 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class AddressResponse {
-
     private Long id;
     private String receiverName;
     private String phone;

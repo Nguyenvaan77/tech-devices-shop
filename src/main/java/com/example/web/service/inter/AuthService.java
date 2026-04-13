@@ -7,10 +7,15 @@ import org.springframework.stereotype.Service;
 import com.example.web.dto.TokenResponse;
 import com.example.web.dto.auth.LoginRequest;
 import com.example.web.dto.auth.reset.ResetPasswordRequest;
+import com.example.web.entity.User;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 public interface AuthService {
+    User getCurrentUser();
+
+    Long getCurrentUserId();
+
     TokenResponse authenticate(LoginRequest loginRequest);
 
     TokenResponse refresh(HttpServletRequest request);

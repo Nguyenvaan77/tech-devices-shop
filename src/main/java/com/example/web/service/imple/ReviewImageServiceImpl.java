@@ -27,14 +27,24 @@ public class ReviewImageServiceImpl implements ReviewImageService {
                                                 "Review not found with id: " + reviewId));
 
                 ReviewImage reviewImage = ReviewImage.builder()
-                                .imageUrl(request.getImageUrl())
+                                .bucketName(request.getBucketName())
+                                .originalFileName(request.getOriginalFileName())
+                                .fileName(request.getFileName())
+                                .fileSize(request.getFileSize())
+                                .contentType(request.getContentType())
+                                .publicUrl(request.getPublicUrl())
                                 .review(review)
                                 .build();
 
                 ReviewImage saved = reviewImageRepository.save(reviewImage);
                 return ReviewImageResponse.builder()
                                 .id(saved.getId())
-                                .imageUrl(saved.getImageUrl())
+                                .bucketName(saved.getBucketName())
+                                .originalFileName(saved.getOriginalFileName())
+                                .fileName(saved.getFileName())
+                                .fileSize(saved.getFileSize())
+                                .contentType(saved.getContentType())
+                                .publicUrl(saved.getPublicUrl())
                                 .reviewId(saved.getReview().getId())
                                 .build();
         }

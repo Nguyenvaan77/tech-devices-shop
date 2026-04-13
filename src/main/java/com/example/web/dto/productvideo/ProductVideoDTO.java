@@ -1,4 +1,4 @@
-package com.example.web.dto.reviewimage.response;
+package com.example.web.dto.productvideo;
 
 import lombok.*;
 
@@ -7,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ReviewImageResponse {
+public class ProductVideoDTO {
     private Long id;
     private String bucketName;
     private String originalFileName;
@@ -15,5 +15,5 @@ public class ReviewImageResponse {
     private long fileSize;
     private String contentType;
     private String publicUrl;
-    private Long reviewId;
+    private Long productId;
 }

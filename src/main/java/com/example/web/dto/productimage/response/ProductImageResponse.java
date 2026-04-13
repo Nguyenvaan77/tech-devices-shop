@@ -9,6 +9,10 @@ import lombok.*;
 @Builder
 public class ProductImageResponse {
     private Long id;
-    private String imageUrl;
-    private Boolean isMain;
+    private String bucketName;
+    private String originalFileName;
+    private String fileName;
+    private long fileSize;
+    private String contentType;
+    private String publicUrl;
 }
