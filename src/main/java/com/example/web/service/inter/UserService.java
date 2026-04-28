@@ -21,4 +21,10 @@ public interface UserService {
     UserResponse updateUser(Long id, UpdateUserRequest request);
 
     void deleteUser(Long id);
+
+    UserResponse getUserByEmail(String email);
+
+    Boolean existsById(Long userId);
+
+    Boolean existsByEmail(String email);
 }

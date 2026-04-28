@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -59,6 +60,17 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "businessOwner")
     private List<Product> products;
+
+    @OneToMany(
+        mappedBy = "user",
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
+    )
+    private List<OAuthAccount> oAuthAccounts = new ArrayList<>();
+
+    public void addNewOAuthAccount(OAuthAccount newOAuthAccount) {
+        oAuthAccounts.add(newOAuthAccount);
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -9,10 +9,13 @@ import com.example.web.entity.User;
 import com.example.web.exception.BadRequestException;
 import com.example.web.exception.ConflictException;
 import com.example.web.exception.ResourceNotFoundException;
+import com.example.web.exception.redis.RedisException;
 import com.example.web.mapper.UserMapper;
 import com.example.web.repository.AddressRepository;
 import com.example.web.repository.UserRepository;
 import com.example.web.service.inter.UserService;
+
+import ch.qos.logback.classic.Logger;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.redis.core.RedisTemplate;
@@ -25,16 +28,50 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+    private final String USER_CACHE_KEY_WITH_ID = "users:id:";
+    private final String USER_CACHE_KEY_WITH_EMAIL = "users:email:";
 
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, Object> redisTemplate;
+
+    
+
+    @Override
+    public UserResponse getUserByEmail(String email) {
+        String cacheKeyWithEmail = USER_CACHE_KEY_WITH_EMAIL + email;
+        
+        try {
+            Long userId = (Long) redisTemplate.opsForValue().get(cacheKeyWithEmail);
+
+            if(userId != null) {
+                return getUser(userId);
+            }
+        } catch (RuntimeException e) {
+            System.err.println("Redis is unconnected");
+        }
+
+        User user = userRepository.findByEmail(email)
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        UserResponse response = userMapper.toResponse(user);
+
+        try {
+            redisTemplate.opsForValue().set(cacheKeyWithEmail, user.getId());
+            redisTemplate.opsForValue().set(USER_CACHE_KEY_WITH_ID + user.getId(), response);
+        } catch(RuntimeException e) {
+            System.err.println("Cannot write cache");
+        }
+
+        return response;
+    }
 
     @Override
     public UserResponse register(RegisterRequest request) {
@@ -93,28 +130,39 @@ public class UserServiceImpl implements UserService {
             throw new BadRequestException("Invalid user ID");
         }
 
-        String cacheKey = "users:" + id;
-        LinkedHashMap linkedHashMap = (LinkedHashMap) redisTemplate.opsForValue().get(cacheKey);
-        UserResponse cachedUser = null;
-        if (linkedHashMap != null) {
-            cachedUser = new UserResponse();
-            cachedUser.setId(((Number) linkedHashMap.get("id")).longValue());
-            cachedUser.setEmail((String) linkedHashMap.get("email"));
-            cachedUser.setFullName((String) linkedHashMap.get("fullName"));
-            cachedUser.setPhone((String) linkedHashMap.get("phone"));
-            // cachedUser.setRole((String) linkedHashMap.get("role"));
-            // Note: Address and other nested objects would require additional mapping
-        }
+        String cacheKey = USER_CACHE_KEY_WITH_ID + id;
 
-        if (cachedUser != null) {
-            return cachedUser;
+        try {    
+            LinkedHashMap linkedHashMap = (LinkedHashMap) redisTemplate.opsForValue().get(cacheKey);
+            UserResponse cachedUser = null;
+            if (linkedHashMap != null) {
+                cachedUser = new UserResponse();
+                cachedUser.setId(((Number) linkedHashMap.get("id")).longValue());
+                cachedUser.setEmail((String) linkedHashMap.get("email"));
+                cachedUser.setFullName((String) linkedHashMap.get("fullName"));
+                cachedUser.setPhone((String) linkedHashMap.get("phone"));
+                // cachedUser.setRole((String) linkedHashMap.get("role"));
+                // Note: Address and other nested objects would require additional mapping
+            }
+
+            if (cachedUser != null) {
+                return cachedUser;
+            }
+        } catch (RuntimeException e) {
+            System.out.println("Redis is unconnected");
         }
 
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         UserResponse response = userMapper.toResponse(user);
-        redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(10));
+
+        try {
+            redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(10));
+        } catch (RuntimeException e) {
+            System.out.println("Redis can not write");
+        }
+        
         return response;
     }
 
@@ -127,8 +175,28 @@ public class UserServiceImpl implements UserService {
         }
 
         String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
+
+        String cacheKeyWithEmail = USER_CACHE_KEY_WITH_EMAIL + email;
+
+        User user = null;
+
+        try {
+            Long userId =(Long) redisTemplate.opsForValue().get(cacheKeyWithEmail);
+            if (userId != null) {
+                return getUser(userId);
+            }
+        } catch (RuntimeException exception) {
+            System.err.println("redis unvaiable");
+        }
+        
+        user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+
+        try {
+            redisTemplate.opsForValue().set(cacheKeyWithEmail, user.getId(), Duration.ofMinutes(10));
+        } catch (RuntimeException e) {
+            System.out.println("Redis can not write");
+        }
 
         return userMapper.toResponse(user);
     }
@@ -136,18 +204,11 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
-        String cacheKey = "users:all";
-        @SuppressWarnings("unchecked")
-        List<UserResponse> cachedUsers = (List<UserResponse>) redisTemplate.opsForValue().get(cacheKey);
-        if (cachedUsers != null) {
-            return cachedUsers;
-        }
-
         List<UserResponse> users = userRepository.findAll()
                 .stream()
                 .map(userMapper::toResponse)
                 .toList();
-        redisTemplate.opsForValue().set(cacheKey, users, Duration.ofMinutes(10));
+
         return users;
     }
 
@@ -173,8 +234,19 @@ public class UserServiceImpl implements UserService {
 
         User updated = userRepository.save(user);
         UserResponse response = userMapper.toResponse(updated);
-        String cacheKey = "users:" + id;
-        redisTemplate.opsForValue().set(cacheKey, response, Duration.ofMinutes(10));
+
+        try {
+            String cacheKeyWithId = USER_CACHE_KEY_WITH_ID + id;
+            redisTemplate.opsForValue().set(cacheKeyWithId, response, Duration.ofMinutes(10));
+
+            String cacheKeyWithEmail = USER_CACHE_KEY_WITH_EMAIL + updated.getEmail();
+            redisTemplate.opsForValue().set(cacheKeyWithEmail, updated.getId(), Duration.ofMinutes(10));
+            
+        } catch (RedisException e) {
+            System.out.println("Redis can't write");
+        } catch (RuntimeException e) {
+            System.out.println("Redis can't write");   
+        }
         return response;
     }
 
@@ -184,9 +256,27 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         user.setIsDeleted(true);
         userRepository.save(user);
-        String cacheKey = "users:" + id;
-        redisTemplate.delete(cacheKey);
-        // Also clear all users cache
-        redisTemplate.delete("users:all");
+        String cacheKeyWithId = USER_CACHE_KEY_WITH_ID + id;
+        String cacheKeyWithEmail = USER_CACHE_KEY_WITH_EMAIL + user.getEmail();
+        try {
+        redisTemplate.delete(cacheKeyWithId);
+        redisTemplate.delete(cacheKeyWithEmail);
+        }catch (RedisException e) {
+            System.out.println("Redis can't delete this element");
+        } catch (RuntimeException e) {
+            System.out.println("Redis can't delete this element");   
+        }
     }
+
+    @Override
+    public Boolean existsById(Long userId) {
+        return userRepository.existsById(userId);
+    }
+
+    @Override
+    public Boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    
 }

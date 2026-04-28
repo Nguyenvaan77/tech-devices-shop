@@ -4,10 +4,14 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Date;
 
+import com.example.web.dto.TokenResponse;
 import com.example.web.entity.User;
+import com.example.web.repository.TokenRepository;
 import com.example.web.util.TokenEnum;
 
 public interface JwtService {
+    
+
     String generateAccessToken(UserDetails user);
 
     String generateRefreshToken(UserDetails user);

@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.authentication.configurers
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import com.example.web.dto.TokenResponse;
 import com.example.web.entity.User;
 import com.example.web.service.inter.JwtService;
 import com.example.web.util.TokenEnum;
@@ -140,4 +141,6 @@ public class JwtServiceImpl implements JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
+
+    
 }
