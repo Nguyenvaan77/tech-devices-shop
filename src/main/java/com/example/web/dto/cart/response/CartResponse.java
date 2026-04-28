@@ -10,8 +10,5 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CartResponse {
-
-    private Long cartId;
     private List<CartItemResponse> items;
-
 }

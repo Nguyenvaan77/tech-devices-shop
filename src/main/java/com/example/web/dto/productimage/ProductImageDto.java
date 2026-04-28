@@ -17,4 +17,3 @@ public class ProductImageDto {
     private String publicUrl;
     private Long productId;
 }
-

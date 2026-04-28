@@ -32,7 +32,8 @@ public class SecurityConfig {
     private final String[] WHITELIST = { "/login",
             "/swagger-ui/index.html",
             "/swagger-ui.html",
-            "/auth/**" };
+            "/auth/**" ,
+            "/oauth/**"};
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {

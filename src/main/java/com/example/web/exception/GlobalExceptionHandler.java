@@ -1,6 +1,9 @@
 package com.example.web.exception;
 
 import com.example.web.dto.ApiResponse;
+import com.example.web.exception.redis.RedisException;
+import com.example.web.exception.redis.RedisUnconnectedException;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -97,6 +100,25 @@ public class GlobalExceptionHandler {
         @ExceptionHandler(InternalServerException.class)
         public ResponseEntity<ApiResponse<?>> handleInternalServerError(InternalServerException e) {
                 logger.error("Internal server error: {}", e.getMessage(), e);
+                return ResponseEntity
+                                .status(500)
+                                .body(ApiResponse.error(e.getMessage(), 500));
+        }
+        
+        // Redis exception
+        // 11. Redis server Connection error 
+        @ExceptionHandler(RedisUnconnectedException.class)
+        public ResponseEntity<ApiResponse<?>> handleRedisServerUnconnectedError(RedisUnconnectedException e) {
+                logger.error("Redis connection error: {}", e.getMessage(), e);
+                return ResponseEntity
+                                .status(500)
+                                .body(ApiResponse.error(e.getMessage(), 500));
+        }
+
+        // 11. Redis error 
+        @ExceptionHandler(RedisException.class)
+        public ResponseEntity<ApiResponse<?>> handleRedisError(RedisException e) {
+                logger.error("Redis error: {}", e.getMessage(), e);
                 return ResponseEntity
                                 .status(500)
                                 .body(ApiResponse.error(e.getMessage(), 500));
