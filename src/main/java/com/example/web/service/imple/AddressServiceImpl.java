@@ -54,6 +54,8 @@ public class AddressServiceImpl implements AddressService {
             throw new BadRequestException("District is required");
         }
 
+        
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
@@ -65,6 +67,18 @@ public class AddressServiceImpl implements AddressService {
         // Clear cache for user addresses
         String cacheKey = "user_addresses:" + userId;
         redisTemplate.delete(cacheKey);
+
+        return addressMapper.toResponse(address);
+    }
+
+    @Override
+    public AddressResponse getAddressById(Long id) {
+        if (id == null || id <= 0) {
+            throw new BadRequestException("Invalid address ID");
+        }
+
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found with id: " + id));
 
         return addressMapper.toResponse(address);
     }

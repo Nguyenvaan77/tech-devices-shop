@@ -4,8 +4,6 @@ services:
     image: redis:7
     container_name: redis
     restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - ./redis-data:/data
     command: >
@@ -17,3 +15,83 @@ services:
       --maxmemory 256mb
       --maxmemory-policy allkeys-lru
       --tcp-keepalive 60
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    restart: always
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: shop_db
+    command: >
+      mysqld
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin123
+    volumes:
+      - ./minio-data:/data
+  app:
+    build: .
+    container_name: app
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - mysql
+      - minio
+    environment:
+      # ===== SERVER =====
+      SERVER_PORT: 8080
+
+      # ===== MYSQL =====
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/shop_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQL8Dialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: true
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: true
+
+      # ===== REDIS =====
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD:
+      SPRING_DATA_REDIS_DATABASE: 0
+
+      # ===== JWT =====
+      JWT_SECRET_KEY: 20340354f7e923dd7a453e552ab31d4cf6a0a60cb6d0fa173017541060ac2a9b
+      JWT_REFRESH_KEY: f2815bbc44f25db2c19affd86c27eb2e1eaa525333f836b60a75bea9b75e027f
+      JWT_RESET_PASSWORD_KEY: 33349a33a846f84e629533e4a540023ba04309a52f93d31add390da18abf9066
+      JWT_EXPIRYHOUR: 1
+      JWT_EXPIRYDAY: 15
+
+      # ===== MINIO =====
+      MINIO_URL: http://minio:9000
+      MINIO_ACCESSKEY: admin
+      MINIO_SECRETKEY: admin123
+      MINIO_BUCKET_IMAGES: product-images
+      MINIO_BUCKET_VIDEOS: product-videos
+
+      # ===== FILE UPLOAD =====
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 200MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 200MB
+
+      # ===== OAUTH2 =====
+      OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+
+volumes:
+  redis-data:
+  mysql-data:
+  minio-data:

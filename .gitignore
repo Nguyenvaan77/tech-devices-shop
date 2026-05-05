@@ -37,3 +37,5 @@ build/
 db/
 docs/
 redis-data/
+mysql-data/
+minio-data/

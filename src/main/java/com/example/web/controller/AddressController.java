@@ -48,6 +48,12 @@ class AddressDetailController {
         return ResponseEntity.ok(ApiResponse.success(address));
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<AddressResponse>> getById(@PathVariable Long id) {
+        AddressResponse address = addressService.getAddressById(id);
+        return ResponseEntity.ok(ApiResponse.success(address));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         addressService.deleteAddress(id);

@@ -11,6 +11,6 @@ public interface AddressService {
     List<AddressResponse> getUserAddresses(Long userId);
 
     AddressResponse updateAddress(Long id, CreateAddressRequest request);
-
+    AddressResponse getAddressById(Long id);
     void deleteAddress(Long addressId);
 }
