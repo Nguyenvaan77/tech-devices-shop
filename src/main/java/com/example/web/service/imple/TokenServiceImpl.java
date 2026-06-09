@@ -53,11 +53,9 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Token provideNewAccessAndRefreshTokenForUser(User user) {
-        String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
         Token token = tokenRepository.findByUserId(user.getId()).orElse(new Token().builder()
-                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .user(user)
                 .build());

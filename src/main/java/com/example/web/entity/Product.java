@@ -3,6 +3,7 @@ package com.example.web.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name;
 
     @ManyToOne
@@ -33,8 +35,16 @@ public class Product {
 
     private String status;
 
+    @Column(nullable = false)
+    private BigDecimal price;
+
+    @Column(columnDefinition = "INTEGER DEFAULT 0")
+    private Integer quantityInStock = 0;
+
+    @Column(columnDefinition = "DOUBLE PRECISION DEFAULT 0")
     private Double ratingAvg = 0.0;
 
+    @Column(columnDefinition = "INTEGER DEFAULT 0")
     private Integer reviewCount = 0;
 
     @Column(nullable = false)
@@ -50,9 +60,6 @@ public class Product {
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductItem> items;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductImage> images;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -63,4 +70,10 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductSale> sales;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartItem> cartItems;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderItem> orderItems;
 }

@@ -15,6 +15,4 @@ public interface OAuth2Service {
     public Map<String,  String> getDataBodyForTokenUrl(AuthProvider provider, String code);
     public Map<String, Object> fetchToken(AuthProvider provider, String code);
     public OAuth2UserInfo verifyIdToken(AuthProvider provider, String idToken);
-
-    
 }

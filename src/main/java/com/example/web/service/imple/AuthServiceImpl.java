@@ -63,6 +63,8 @@ public class AuthServiceImpl implements AuthService {
     private final OAuthAccountRepository oAuthAccountRepository;
     private final OAuth2Service oAuth2Service;
 
+
+
     @Override
     public User getCurrentUser() {
         Authentication authentication = SecurityContextHolder
@@ -157,14 +159,13 @@ public class AuthServiceImpl implements AuthService {
         Token token = tokenRepository.findByUserId(currentUser.getId()).orElse(new Token());
 
         token.setUser(currentUser);
-        token.setAccessToken(accessToken);
         token.setRefreshToken(refreshToken);
 
         tokenRepository.save(token);
 
         return TokenResponse.builder()
-                .accessToken(token.getAccessToken())
-                .refreshToken(token.getRefreshToken())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .userId(userId)
                 .build();
     }
@@ -182,7 +183,6 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = jwtService.generateRefreshToken(user);
 
         Token token = tokenRepository.findByUserId(user.getId()).orElse(new Token().builder()
-                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .user(user)
                 .build());
@@ -190,8 +190,8 @@ public class AuthServiceImpl implements AuthService {
         tokenRepository.save(token);
 
         return TokenResponse.builder()
-                .accessToken(token.getAccessToken())
-                .refreshToken(token.getRefreshToken())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .userId(userId)
                 .build();
     }
@@ -221,7 +221,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         Token token = tokenOptional.get();
-        token.setAccessToken(newAccessToken);
         tokenRepository.save(token);
 
         return TokenResponse.builder()

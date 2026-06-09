@@ -21,4 +21,11 @@ public interface ProductService {
     PageResponse<ProductResponse> searchProducts(ProductFilterRequest filter);
 
     void deleteProduct(Long id);
+
+    // Stock Management
+    boolean isInStock(Long productId, int quantity);
+
+    void decreaseStock(Long productId, int quantity);
+
+    void increaseStock(Long productId, int quantity);
 }

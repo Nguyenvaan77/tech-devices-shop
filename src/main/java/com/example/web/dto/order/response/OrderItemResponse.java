@@ -12,9 +12,10 @@ import java.math.BigDecimal;
 public class OrderItemResponse {
 
     private Long id;
-    private Long productItemId;
-    private String productCode;
+    private Long productId;
+    private String productName;
     private Integer quantity;
     private BigDecimal price;
+    private BigDecimal subtotal; // quantity * price
 
 }

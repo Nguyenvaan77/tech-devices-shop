@@ -1,5 +1,10 @@
 package com.example.web.entity;
 
+import java.time.LocalDateTime;
+
+import org.hibernate.annotations.CreationTimestamp;
+import org.springframework.cglib.core.Local;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,9 +31,12 @@ public class Token {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String accessToken;
-
     private String refreshToken;
+
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+
+    private LocalDateTime expiredAt;
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)

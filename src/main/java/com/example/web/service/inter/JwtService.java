@@ -22,5 +22,7 @@ public interface JwtService {
 
     Date extractTokenExpired(String token, TokenEnum tokenEnum);
 
+    String extractIssuer(String token, TokenEnum tokenEnum);
+
     boolean isValid(String token, TokenEnum tokenEnum, UserDetails userDetails);
 };

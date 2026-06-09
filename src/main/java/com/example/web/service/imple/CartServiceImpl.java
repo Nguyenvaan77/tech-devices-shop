@@ -5,14 +5,15 @@ import com.example.web.dto.cart.response.CartItemResponse;
 import com.example.web.dto.cart.response.CartResponse;
 import com.example.web.entity.Cart;
 import com.example.web.entity.CartItem;
-import com.example.web.entity.ProductItem;
+import com.example.web.entity.Product;
 import com.example.web.entity.User;
 import com.example.web.exception.BadRequestException;
 import com.example.web.exception.ResourceNotFoundException;
+import com.example.web.exception.InsufficientStockException;
 import com.example.web.mapper.CartMapper;
 import com.example.web.repository.CartItemRepository;
 import com.example.web.repository.CartRepository;
-import com.example.web.repository.ProductItemRepository;
+import com.example.web.repository.ProductRepository;
 import com.example.web.repository.UserRepository;
 import com.example.web.service.inter.AuthService;
 import com.example.web.service.inter.CartService;
@@ -40,7 +41,7 @@ public class CartServiceImpl implements CartService {
 
         private final CartRepository cartRepository;
         private final CartItemRepository cartItemRepository;
-        private final ProductItemRepository productItemRepository;
+        private final ProductRepository productRepository;
         private final UserRepository userRepository;
         private final CartMapper cartMapper;
 
@@ -69,11 +70,11 @@ public class CartServiceImpl implements CartService {
                                         String field = (String) entry.getKey();     // product:10
                                         String value = (String) entry.getValue();   // amount
 
-                                        Long productItemId = extractProductId(field);
+                                        Long productId = extractProductId(field);
                                         Integer amount = Integer.parseInt(value);
 
                                         CartItemResponse cartItemResponse = new CartItemResponse();
-                                        cartItemResponse.setProductItemId(productItemId);
+                                        cartItemResponse.setProductId(productId);
                                         cartItemResponse.setQuantity(amount);
 
                                         cartItemResponses.add(cartItemResponse);
@@ -85,7 +86,7 @@ public class CartServiceImpl implements CartService {
                         }
                         
                 } catch (RuntimeException exception) {
-                        System.out.println("Redis unvaiable");
+                        System.out.println("Redis unavailable");
                 }
                 
 
@@ -108,8 +109,8 @@ public class CartServiceImpl implements CartService {
                         throw new BadRequestException("Add to cart request cannot be null");
                 }
 
-                if (request.getProductItemId() == null || request.getProductItemId() <= 0) {
-                        throw new BadRequestException("Invalid product item ID");
+                if (request.getProductId() == null || request.getProductId() <= 0) {
+                        throw new BadRequestException("Invalid product ID");
                 }
 
                 if (request.getQuantity() == null || request.getQuantity() <= 0) {
@@ -130,19 +131,27 @@ public class CartServiceImpl implements CartService {
                                 "Cart not found for user: " + user.getId()));
 
                 // 4. Lấy product
-                ProductItem productItem = productItemRepository.findById(request.getProductItemId())
+                Product product = productRepository.findById(request.getProductId())
                         .orElseThrow(() -> new ResourceNotFoundException(
-                                "ProductItem not found with id: " + request.getProductItemId()));
+                                "Product not found with id: " + request.getProductId()));
 
-                // 5. Kiểm tra đã tồn tại trong cart chưa
+                // 5. Kiểm tra tồn kho
+                if (product.getQuantityInStock() < request.getQuantity()) {
+                        throw new InsufficientStockException("Not enough stock for product: " + product.getName());
+                }
+
+                // 6. Kiểm tra đã tồn tại trong cart chưa
                 CartItem existingItem = cartItemRepository
-                        .findByCartIdAndProductItemId(cart.getId(), productItem.getId())
+                        .findByCartIdAndProductId(cart.getId(), product.getId())
                         .orElse(null);
 
                 int newQuantity;
 
                 if (existingItem != null) {
                         // CASE 1: đã tồn tại → cộng dồn
+                        if (product.getQuantityInStock() < existingItem.getQuantity() + request.getQuantity()) {
+                                throw new InsufficientStockException("Not enough stock for product: " + product.getName());
+                        }
                         newQuantity = existingItem.getQuantity() + request.getQuantity();
                         existingItem.setQuantity(newQuantity);
                         cartItemRepository.save(existingItem);
@@ -152,23 +161,23 @@ public class CartServiceImpl implements CartService {
 
                         CartItem newItem = CartItem.builder()
                                 .cart(cart)
-                                .productItem(productItem)
+                                .product(product)
                                 .quantity(newQuantity)
                                 .build();
 
                         cartItemRepository.save(newItem);
                 }
 
-                // 6. Update Redis (atomic)
+                // 7. Update Redis (atomic)
                 String key = "cart:user:" + user.getId();
-                String field = "product:" + productItem.getId();
+                String field = "product:" + product.getId();
 
                 redisTemplate.opsForHash().put(key, field, String.valueOf(newQuantity));
 
                 // reset TTL
                 redisTemplate.expire(key, Duration.ofMinutes(10));
 
-                // 7. Trả response
+                // 8. Trả response
                 return cartMapper.toResponse(cart);
         }
 
@@ -188,7 +197,7 @@ public class CartServiceImpl implements CartService {
                 CartResponse cartResponse = cartMapper.toResponse(cart);
 
                 // Xóa cache xong insert lại cart mới 
-                removeProductItemFromCache(cart.getUser().getId(), item.getProductItem().getId());
+                removeProductFromCache(cart.getUser().getId(), item.getProduct().getId());
 
                 return cartResponse;
         }
@@ -207,10 +216,15 @@ public class CartServiceImpl implements CartService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "CartItem not found with id: " + cartItemId));
 
+                // Kiểm tra tồn kho
+                if (item.getProduct().getQuantityInStock() < quantity) {
+                        throw new InsufficientStockException("Not enough stock for product: " + item.getProduct().getName());
+                }
+
                 item.setQuantity(quantity);
                 cartItemRepository.save(item);
 
-                updateCartItemQuantityRedis(item.getCart().getUser().getId(), item.getProductItem().getId(), quantity);
+                updateCartItemQuantityRedis(item.getCart().getUser().getId(), item.getProduct().getId(), quantity);
 
                 return cartMapper.toResponse(item.getCart());
         }
@@ -257,7 +271,7 @@ public class CartServiceImpl implements CartService {
                 Map<String, String> map = new HashMap<>();
 
                 for (CartItemResponse item : cartResponse.getItems()) {
-                        String field = "product:" + item.getProductItemId();
+                        String field = "product:" + item.getProductId();
                         String value = String.valueOf(item.getQuantity());
 
                         map.put(field, value);
@@ -270,9 +284,9 @@ public class CartServiceImpl implements CartService {
                 redisTemplate.expire(key, Duration.ofMinutes(10));
         }
 
-        private void removeProductItemFromCache(Long userId, Long productItemId) {
+        private void removeProductFromCache(Long userId, Long productId) {
                 String key = "cart:user:" + userId;
-                String field = "product:" + productItemId;
+                String field = "product:" + productId;
 
                 redisTemplate.opsForHash().delete(key, field);
         }

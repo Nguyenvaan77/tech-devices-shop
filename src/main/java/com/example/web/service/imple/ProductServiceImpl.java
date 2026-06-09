@@ -177,4 +177,60 @@ public class ProductServiceImpl implements ProductService {
         productRepository.deleteById(id);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isInStock(Long productId, int quantity) {
+        if (productId == null || productId <= 0) {
+            throw new BadRequestException("Invalid product ID");
+        }
+
+        if (quantity <= 0) {
+            throw new BadRequestException("Quantity must be greater than 0");
+        }
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        return product.getQuantityInStock() >= quantity;
+    }
+
+    @Override
+    public void decreaseStock(Long productId, int quantity) {
+        if (productId == null || productId <= 0) {
+            throw new BadRequestException("Invalid product ID");
+        }
+
+        if (quantity <= 0) {
+            throw new BadRequestException("Quantity must be greater than 0");
+        }
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        if (product.getQuantityInStock() < quantity) {
+            throw new com.example.web.exception.InsufficientStockException(
+                    "Not enough stock for product: " + product.getName());
+        }
+
+        product.setQuantityInStock(product.getQuantityInStock() - quantity);
+        productRepository.save(product);
+    }
+
+    @Override
+    public void increaseStock(Long productId, int quantity) {
+        if (productId == null || productId <= 0) {
+            throw new BadRequestException("Invalid product ID");
+        }
+
+        if (quantity <= 0) {
+            throw new BadRequestException("Quantity must be greater than 0");
+        }
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+
+        product.setQuantityInStock(product.getQuantityInStock() + quantity);
+        productRepository.save(product);
+    }
+
 }

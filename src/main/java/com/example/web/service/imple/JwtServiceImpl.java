@@ -43,6 +43,12 @@ public class JwtServiceImpl implements JwtService {
 
     @Value("${jwt.expiryHour}")
     private long expiryHour;
+    
+    @Value("${jwt.expiryMinute}")
+    private long expiryMinute;
+
+    @Value("${jwt.issuer}")
+    private String issuer;
 
     @Override
     public String generateAccessToken(UserDetails user) {
@@ -70,13 +76,23 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
+    public String extractIssuer(String token, TokenEnum tokenEnum) {
+        return extractClaim(token, tokenEnum, Claims::getIssuer);
+    }
+
+    @Override
     public boolean isValid(String token, TokenEnum tokenEnum, UserDetails userDetails) {
         final String username = extractUsername(token, tokenEnum);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token, tokenEnum));
+
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token, tokenEnum) && isIssuerMatching(token, tokenEnum));
     }
 
     private boolean isTokenExpired(String token, TokenEnum tokenEnum) {
         return extractTokenExpired(token, tokenEnum).before(new Date());
+    }
+
+    private boolean isIssuerMatching(String token, TokenEnum tokenEnum) {
+        return issuer.equals(extractIssuer(token, tokenEnum));
     }
 
     private String generateAccessToken(Map<String, Object> claims, UserDetails userDetails) {
@@ -84,7 +100,8 @@ public class JwtServiceImpl implements JwtService {
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * expiryHour))
+                .setExpiration(new Date(System.currentTimeMillis() + (1000 * 60 * 60) * expiryHour + (1000 * 60) * expiryMinute))
+                .setIssuer(issuer)
                 .signWith(getKey(TokenEnum.ACCESS_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -95,6 +112,7 @@ public class JwtServiceImpl implements JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * expiryDay))
+                .setIssuer(issuer)
                 .signWith(getKey(TokenEnum.REFRESH_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -105,6 +123,7 @@ public class JwtServiceImpl implements JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * expiryDay))
+                .setIssuer(issuer)
                 .signWith(getKey(TokenEnum.RESET_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -129,7 +148,7 @@ public class JwtServiceImpl implements JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private <T> T extractClaim(String token, TokenEnum tokenEnum, Function<Claims, T> claimResolver) {
+    private <T> T extractClaim(String token, TokenEnum tokenEnum, Function<Claims, T> claimResolver) throws NullPointerException {
         final Claims claims = extractAllClaim(token, tokenEnum);
         return claimResolver.apply(claims);
     }
@@ -139,8 +158,7 @@ public class JwtServiceImpl implements JwtService {
                 .setSigningKey(getKey(tokenEnum))
                 .build()
                 .parseClaimsJws(token)
+                
                 .getBody();
     }
-
-    
 }
