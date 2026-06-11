@@ -1,10 +1,14 @@
 package com.example.web.security;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
 import org.eclipse.angus.mail.handlers.handler_base;
 import org.hibernate.grammars.hql.HqlParser.SecondContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -52,12 +56,21 @@ public class PreFilter extends OncePerRequestFilter{
                 log.info("Token: {}", token);
 
                 final String userName = jwtService.extractUsername(token, TokenEnum.ACCESS_TOKEN);
+                final List<String> authorities = jwtService.extractAuthorities(token, TokenEnum.ACCESS_TOKEN);
+
+                Collection<? extends GrantedAuthority> grantedAuthorities =
+                authorities.stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .toList();
+
+                log.info("Authorities: {}", grantedAuthorities);
 
                 if(StringUtils.isNotEmpty(userName) && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = customUserDetailService.userDetailsService().loadUserByUsername(userName);
                     if (jwtService.isValid(token,TokenEnum.ACCESS_TOKEN, userDetails)) {
                         SecurityContext context = SecurityContextHolder.createEmptyContext();
-                        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        // UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, grantedAuthorities);
                         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                         context.setAuthentication(authenticationToken);
                         SecurityContextHolder.setContext(context);

@@ -686,20 +686,24 @@ src/main/java/com/example/web/
 
 ## 🔐 Các Endpoint Chính
 
+### Role
+- `CUSTOMER`
+- `ADMIN`
+
 ### Authentication (Xác Thực)
-- `POST /api/auth/register` - Đăng ký
-- `POST /api/auth/login` - Đăng nhập
-- `POST /api/auth/refresh` - Làm mới token
+- `POST /api/auth/register` - Đăng ký | Any Role
+- `POST /api/auth/login` - Đăng nhập | Any Role
+- `POST /api/auth/refresh` - Làm mới token | isAuthenticated() // Chỉ cần đăng nhập rồi
 
 ### User (Người Dùng)
-- `GET /api/users/{id}` - Lấy thông tin người dùng
-- `PUT /api/users/{id}` - Cập nhật thông tin
-- `GET /api/users/{id}/addresses` - Danh sách địa chỉ
+- `GET /api/users/{id}` - Lấy thông tin người dùng | CUSTOMER(Chính họ) or ADMIN(Tất cả admin đều lấy đc hết thông tin customer)
+- `PUT /api/users/{id}` - Cập nhật thông tin | USER
+- `GET /api/users/{id}/addresses` - Danh sách địa chỉ | USER
 
 ### Products (Sản Phẩm)
-- `GET /api/products` - Danh sách sản phẩm
-- `GET /api/products/{id}` - Chi tiết sản phẩm
-- `GET /api/categories` - Danh sách danh mục
+- `GET /api/products` - Danh sách sản phẩm | Any Role
+- `GET /api/products/{id}` - Chi tiết sản phẩm | Any Role
+- `GET /api/categories` - Danh sách danh mục | Any Role 
 
 ### Shopping (Mua Sắm)
 - `POST /api/carts/items` - Thêm vào giỏ

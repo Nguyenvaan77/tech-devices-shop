@@ -8,6 +8,7 @@ import com.example.web.service.inter.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,12 +20,14 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    @PreAuthorize("hasAuthority('ORDER_READ')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<OrderResponse>>> getAll() {
         List<OrderResponse> orders = orderService.getAllOrders();
         return ResponseEntity.ok(ApiResponse.success(orders));
     }
-
+ 
+    @PreAuthorize("hasAuthority('ORDER_CREATE')")
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> create(
             @RequestBody CreateOrderRequest request) {
@@ -32,18 +35,21 @@ public class OrderController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(order));
     }
 
+    @PreAuthorize("hasAuthority('ORDER_READ')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<OrderResponse>> getById(@PathVariable Long id) {
         OrderResponse order = orderService.getOrder(id);
         return ResponseEntity.ok(ApiResponse.success(order));
     }
-
+ 
+    @PreAuthorize("hasAuthority('ORDER_UPDATE')")
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<ApiResponse<OrderResponse>> cancel(@PathVariable Long id) {
         OrderResponse order = orderService.cancelOrder(id);
         return ResponseEntity.ok(ApiResponse.success(order));
     }
-
+ 
+    @PreAuthorize("hasAuthority('ORDER_UPDATE')")
     @PatchMapping("/{id}/status")
     public ResponseEntity<ApiResponse<OrderResponse>> updateStatus(
             @PathVariable Long id,
@@ -51,7 +57,8 @@ public class OrderController {
         OrderResponse order = orderService.updateOrderStatus(id, status);
         return ResponseEntity.ok(ApiResponse.success(order));
     }
-
+ 
+    @PreAuthorize("hasAuthority('ORDER_READ')")
     @GetMapping("/{orderId}/items")
     public ResponseEntity<ApiResponse<List<OrderItemResponse>>> getItems(@PathVariable Long orderId) {
         List<OrderItemResponse> items = orderService.getOrderItems(orderId);

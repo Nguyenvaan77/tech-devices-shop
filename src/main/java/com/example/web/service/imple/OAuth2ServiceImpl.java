@@ -1,27 +1,27 @@
 package com.example.web.service.imple;
 
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.example.web.dto.TokenResponse;
 import com.example.web.dto.oauth2.OAuth2UserInfo;
-import com.example.web.entity.OAuthAccount;
 import com.example.web.service.inter.OAuth2Service;
 import com.example.web.util.AuthProvider;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.proc.JWTProcessor;
 
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.http.*;
 
 @Service
 @RequiredArgsConstructor

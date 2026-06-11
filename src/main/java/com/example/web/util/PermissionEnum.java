@@ -1,0 +1,23 @@
+package com.example.web.util;
+
+public enum PermissionEnum {
+    PRODUCT_READ,
+    PRODUCT_CREATE,
+    PRODUCT_UPDATE,
+    PRODUCT_DELETE,
+
+    USER_CREATE,
+    USER_UPDATE,
+    USER_DELETE,
+    USER_READ,
+
+    ORDER_READ,
+    ORDER_DELETE,
+    ORDER_UPDATE,
+    ORDER_CREATE,
+
+    PAYMENT_CREATE,
+    PAYMENT_UPDATE,
+    PAYMENT_DELETE,
+    PAYMENT_READ
+}

@@ -4,11 +4,13 @@ import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.annotation.authentication.configurers.userdetails.UserDetailsAwareConfigurer;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -52,7 +54,11 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public String generateAccessToken(UserDetails user) {
-        return generateAccessToken(new HashMap<>(), user);
+        Map<String, Object> claims = new HashMap<>();
+
+        claims.put("authorities", getAuthorities(user));
+
+        return generateAccessToken(claims, user);
     }
 
     @Override
@@ -71,6 +77,18 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
+    public List<String> extractAuthorities(String token, TokenEnum tokenEnum) {
+    return extractClaim(token, tokenEnum, claims -> {
+            List<?> authorities =
+                    claims.get("authorities", List.class);
+
+            return authorities.stream()
+                    .map(Object::toString)
+                    .toList();
+        });
+    }
+
+    @Override
     public Date extractTokenExpired(String token, TokenEnum tokenEnum) {
         return extractClaim(token, tokenEnum, Claims::getExpiration);
     }
@@ -86,6 +104,14 @@ public class JwtServiceImpl implements JwtService {
 
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token, tokenEnum) && isIssuerMatching(token, tokenEnum));
     }
+
+    private List<String> getAuthorities(UserDetails user) {
+        return user.getAuthorities()
+                    .stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .toList();
+    }
+
 
     private boolean isTokenExpired(String token, TokenEnum tokenEnum) {
         return extractTokenExpired(token, tokenEnum).before(new Date());

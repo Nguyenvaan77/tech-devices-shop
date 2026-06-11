@@ -7,6 +7,7 @@ import com.example.web.service.inter.AddressService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,12 +19,14 @@ public class AddressController {
 
     private final AddressService addressService;
 
+    @PreAuthorize("hasAuthority('ADDRESS_READ')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<AddressResponse>>> getAll(@PathVariable Long userId) {
         List<AddressResponse> addresses = addressService.getUserAddresses(userId);
         return ResponseEntity.ok(ApiResponse.success(addresses));
     }
 
+    @PreAuthorize("hasAuthority('ADDRESS_READ')")
     @PostMapping
     public ResponseEntity<ApiResponse<AddressResponse>> create(
             @PathVariable Long userId,
@@ -40,6 +43,7 @@ class AddressDetailController {
 
     private final AddressService addressService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<AddressResponse>> update(
             @PathVariable Long id,
@@ -47,13 +51,14 @@ class AddressDetailController {
         AddressResponse address = addressService.updateAddress(id, request);
         return ResponseEntity.ok(ApiResponse.success(address));
     }
-
+    
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<AddressResponse>> getById(@PathVariable Long id) {
         AddressResponse address = addressService.getAddressById(id);
         return ResponseEntity.ok(ApiResponse.success(address));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
         addressService.deleteAddress(id);

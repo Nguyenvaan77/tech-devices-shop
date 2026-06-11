@@ -6,12 +6,15 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
@@ -36,7 +39,13 @@ public class User implements UserDetails {
 
     private String phone;
 
-    private String role;
+    @ManyToMany
+    @JoinTable(
+        name = "users_roles",
+        joinColumns = @JoinColumn(name = "user"),
+        inverseJoinColumns = @JoinColumn(name = "role")
+    )
+    private Set<Role> roles;
 
     @CreationTimestamp
     @Column(nullable = false)
@@ -46,6 +55,7 @@ public class User implements UserDetails {
     @JoinColumn(name = "address_id")
     private Address address;
 
+    @Builder.Default
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isDeleted = false;
 
@@ -61,6 +71,7 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "businessOwner")
     private List<Product> products;
 
+    @Builder.Default
     @OneToMany(
         mappedBy = "user",
         cascade = CascadeType.ALL,
@@ -74,7 +85,28 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(() -> "ROLE_" + role);
+        Set<SimpleGrantedAuthority> authorities =
+            new HashSet<>();
+
+        for (Role role : roles) {
+
+            authorities.add(
+                    new SimpleGrantedAuthority(
+                            "ROLE_" + role.getRoleName().name()
+                    )
+            );
+
+            for (Permission permission : role.getPermissions()) {
+
+                authorities.add(
+                        new SimpleGrantedAuthority(
+                                permission.getPermissionName().name()
+                        )
+                );
+            }
+        }
+
+        return authorities;
     }
 
     @Override

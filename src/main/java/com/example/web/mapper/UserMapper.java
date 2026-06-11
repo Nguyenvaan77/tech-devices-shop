@@ -21,7 +21,7 @@ public interface UserMapper {
     @Mapping(target = "orders", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "reviews", ignore = true)
-    @Mapping(target = "role", ignore = true)
+    // @Mapping(target = "role", ignore = true)
     User toEntity(UserDTO dto);
 
     @Mapping(target = "id", ignore = true)
@@ -30,6 +30,6 @@ public interface UserMapper {
     @Mapping(target = "orders", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
     @Mapping(target = "reviews", ignore = true)
-    @Mapping(target = "role", ignore = true)
+    // @Mapping(target = "role", ignore = true)
     User toEntity(RegisterRequest request);
 }

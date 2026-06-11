@@ -65,6 +65,10 @@ public class RedisConfiguration {
         // Serializer riêng cho từng cache
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
 
+        cacheConfigurations.put("cart",
+                defaultConfig.entryTtl(Duration.ofDays(30))
+        );
+
         cacheConfigurations.put("users",
                 defaultConfig.serializeValuesWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(

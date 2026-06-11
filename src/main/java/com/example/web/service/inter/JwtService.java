@@ -3,6 +3,7 @@ package com.example.web.service.inter;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Date;
+import java.util.List;
 
 import com.example.web.dto.TokenResponse;
 import com.example.web.entity.User;
@@ -19,6 +20,8 @@ public interface JwtService {
     String generateResetPasswordToken(UserDetails user);
 
     String extractUsername(String token, TokenEnum tokenEnum);
+
+    List<String> extractAuthorities(String token, TokenEnum tokenEnum);
 
     Date extractTokenExpired(String token, TokenEnum tokenEnum);
 

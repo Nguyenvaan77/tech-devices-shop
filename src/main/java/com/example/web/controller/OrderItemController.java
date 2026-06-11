@@ -1,11 +1,18 @@
 package com.example.web.controller;
 
 import com.example.web.dto.ApiResponse;
+import com.example.web.repository.OrderItemRepository;
+
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/orders/{orderId}/items")
+@RequestMapping("/api/items")
+@RequiredArgsConstructor
 public class OrderItemController {
+    private final OrderItemRepository orderItemRepository;
 
     @GetMapping
     public Object getItems(@PathVariable Long orderId) {

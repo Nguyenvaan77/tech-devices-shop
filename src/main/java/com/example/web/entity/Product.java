@@ -27,7 +27,7 @@ public class Product {
     @JoinColumn(name = "business_id")
     private User businessOwner;
 
-    @Column(columnDefinition = "JSONB")
+    @Column(columnDefinition = "JSON")
     private String specifications;
 
     @Column(columnDefinition = "TEXT")
@@ -38,12 +38,14 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Builder.Default
     @Column(columnDefinition = "INTEGER DEFAULT 0")
     private Integer quantityInStock = 0;
 
     @Column(columnDefinition = "DOUBLE PRECISION DEFAULT 0")
-    private Double ratingAvg = 0.0;
+    private Double ratingAvg = null;
 
+    @Builder.Default
     @Column(columnDefinition = "INTEGER DEFAULT 0")
     private Integer reviewCount = 0;
 
@@ -52,6 +54,7 @@ public class Product {
 
     private LocalDateTime updatedAt;
 
+    @Builder.Default
     @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean isDeleted = false;
 
