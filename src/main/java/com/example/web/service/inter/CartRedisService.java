@@ -18,7 +18,7 @@ public class CartRedisService {
     private static final Duration CART_TTL = Duration.ofDays(30);
     private final String CART_CACHE_PREFIX = "user:cart_";
 
-    private final String CART_CHANGING_PREFIX = "cart:change";
+    private final String DIRTY_CARTS_KEY = "dirty:carts";
 
     private String getKeyFromUserId(Long userId) {
         if (userId == null || userId <= 0) {
@@ -31,12 +31,26 @@ public class CartRedisService {
     private void addToChangedList(Long userId) {
         if(userId == null || userId <= 0) throw new IllegalArgumentException("user id is not null or less than or equal 0");
 
-        redisTemplate.opsForSet().add(CART_CHANGING_PREFIX, userId);
+        redisTemplate.opsForSet().add(DIRTY_CARTS_KEY, userId.toString());
     }
 
-    private void removeAllChangedList() {
-        if(redisTemplate.hasKey(CART_CHANGING_PREFIX) && redisTemplate.opsForSet().size(CART_CHANGING_PREFIX) <= 0) redisTemplate.delete(CART_CHANGING_PREFIX);
+    public java.util.Set<Long> getAllDirtyCarts() {
+        java.util.Set<Object> members = redisTemplate.opsForSet().members(DIRTY_CARTS_KEY);
+        if (members == null || members.isEmpty()) {
+            return java.util.Collections.emptySet();
+        }
+        return members.stream()
+                .map(obj -> Long.parseLong(obj.toString()))
+                .collect(java.util.stream.Collectors.toSet());
     }
+
+    public void removeDirtyCart(Long userId) {
+        if (userId != null) {
+            redisTemplate.opsForSet().remove(DIRTY_CARTS_KEY, userId.toString());
+        }
+    }
+
+
 
     public CartByCacheResponse getCart(Long userId) {
         if (userId == null || userId <= 0) {

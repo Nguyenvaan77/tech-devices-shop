@@ -2,6 +2,7 @@ package com.example.web.repository;
 
 import com.example.web.entity.CartItem;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,4 +15,12 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     @Query("SELECT ci FROM CartItem ci WHERE ci.cart.id = :cartId AND ci.product.id = :productId")
     Optional<CartItem> findByCartIdAndProductId(@Param("cartId") Long cartId, @Param("productId") Long productId);
+
+    @Modifying
+    @Query("delete from CartItem ci where ci.cart.id = :cartId")
+    void deleteByCartId(Long cartId);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("DELETE FROM CartItem ci WHERE ci.cart.user.id = :userId")
+    void deleteByUserId(@Param("userId") Long userId);
 }
