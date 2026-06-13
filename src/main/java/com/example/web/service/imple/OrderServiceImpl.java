@@ -13,6 +13,7 @@ import com.example.web.mapper.OrderMapper;
 import com.example.web.repository.*;
 import com.example.web.service.inter.CartRedisService;
 import com.example.web.service.inter.OrderService;
+import com.example.web.util.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -137,7 +138,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = Order.builder()
                 .user(user)
                 .address(address)
-                .status("PENDING")
+                .status(OrderStatus.PENDING_PAYMENT.name())
                 .paymentMethod(request.getPaymentMethod())
                 .createdAt(LocalDateTime.now())
                 .totalPrice(BigDecimal.ZERO)
@@ -150,19 +151,12 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItem> orderItems = new ArrayList<>();
 
         /*
-        * Create OrderItem + Update Stock
+        * Create OrderItem
         */
         for (CartItemByCacheResponse item : cartItems) {
 
             Product product =
                     productMap.get(item.getProduct_id());
-
-            product.setQuantityInStock(
-                    product.getQuantityInStock()
-                            - item.getQuantity()
-            );
-
-            productRepository.save(product);
 
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
@@ -241,12 +235,12 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-        if ("CANCELLED".equals(order.getStatus())) {
+        if (OrderStatus.CANCELLED.name().equals(order.getStatus())) {
             throw new BadRequestException("Order is already cancelled");
         }
 
-        // Hoàn trả tồn kho
-        if (order.getItems() != null) {
+        // Hoàn trả tồn kho nếu đã thanh toán
+        if (OrderStatus.PAID.name().equals(order.getStatus()) && order.getItems() != null) {
             for (OrderItem item : order.getItems()) {
                 Product product = item.getProduct();
                 product.setQuantityInStock(product.getQuantityInStock() + item.getQuantity());
@@ -254,7 +248,7 @@ public class OrderServiceImpl implements OrderService {
             }
         }
 
-        order.setStatus("CANCELLED");
+        order.setStatus(OrderStatus.CANCELLED.name());
         Order updated = orderRepository.save(order);
         return orderMapper.toResponse(updated);
     }

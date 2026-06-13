@@ -33,7 +33,9 @@ public class SecurityConfig {
             "/swagger-ui/index.html",
             "/swagger-ui.html",
             "/auth/**" ,
-            "/oauth/**"};
+            "/oauth/**",
+            "/api/payments/vnpay-ipn",
+            "/api/payments/vnpay-return"};
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {

@@ -1,6 +1,7 @@
 package com.example.web.exception;
 
 import com.example.web.dto.ApiResponse;
+import com.example.web.dto.payment.PaymentReturnResponse;
 import com.example.web.exception.redis.RedisException;
 import com.example.web.exception.redis.RedisUnconnectedException;
 
@@ -124,7 +125,27 @@ public class GlobalExceptionHandler {
                                 .body(ApiResponse.error(e.getMessage(), 500));
         }
 
-        // 11. Catch ALL (system exception)
+        // 12. Invalid Signature error 
+        @ExceptionHandler(InvalidSignatureException.class)
+        public ResponseEntity<ApiResponse<?>> handleInvalidSignatureError(InvalidSignatureException e) {
+                logger.error("Payment error: {}", e.getMessage(), e);
+                
+                return ResponseEntity.badRequest().body(ApiResponse.<PaymentReturnResponse>builder()
+                    .status(400)
+                    .message("Invalid Signature")
+                    .build());
+        }
+
+        // 12. Payment Exception
+        @ExceptionHandler(PaymentException.class)
+        public ResponseEntity<ApiResponse<?>> handlePaymentException(PaymentException e) {
+                logger.error("Payment error: {}", e.getMessage(), e);
+                return ResponseEntity
+                                .badRequest()
+                                .body(ApiResponse.error(e.getMessage(), 400));
+        }
+
+        // 13. Catch ALL (system exception)
         @ExceptionHandler(Exception.class)
         public ResponseEntity<ApiResponse<?>> handleException(Exception e) {
                 logger.error("Unexpected error: {}", e.getMessage(), e);

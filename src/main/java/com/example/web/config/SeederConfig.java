@@ -244,8 +244,8 @@ public class SeederConfig {
 
                     Payment payment = Payment.builder()
                             .order(order)
-                            .provider("VNPay")
-                            .transactionId(UUID.randomUUID().toString())
+                            .paymentMethod("VNPAY")
+                            .paymentCode(UUID.randomUUID().toString())
                             .amount(order.getTotalPrice())
                             .status("SUCCESS")
                             .createdAt(LocalDateTime.now())
