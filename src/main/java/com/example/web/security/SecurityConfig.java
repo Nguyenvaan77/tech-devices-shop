@@ -35,7 +35,9 @@ public class SecurityConfig {
             "/auth/**" ,
             "/oauth/**",
             "/api/payments/vnpay-ipn",
-            "/api/payments/vnpay-return"};
+            "/api/payments/vnpay-return",
+            "/actuator/**",
+            "/actuator"};
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {

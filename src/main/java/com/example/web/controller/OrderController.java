@@ -30,8 +30,9 @@ public class OrderController {
     @PreAuthorize("hasAuthority('ORDER_CREATE')")
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> create(
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
             @RequestBody CreateOrderRequest request) {
-        OrderResponse order = orderService.createOrder(request);
+        OrderResponse order = orderService.createOrder(request, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(order));
     }
 

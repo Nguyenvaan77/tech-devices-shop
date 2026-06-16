@@ -7,7 +7,7 @@ import com.example.web.dto.order.response.OrderItemResponse;
 import java.util.List;
 
 public interface OrderService {
-    OrderResponse createOrder(CreateOrderRequest request);
+    OrderResponse createOrder(CreateOrderRequest request, String idempotencyKey);
 
     List<OrderResponse> getAllOrders();
 

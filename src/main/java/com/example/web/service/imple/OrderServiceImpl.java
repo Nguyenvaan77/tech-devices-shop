@@ -23,6 +23,13 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import com.example.web.exception.MissingIdempotencyKeyException;
+import com.example.web.exception.OrderProcessingException;
+import com.example.web.dto.order.IdempotencyRecord;
+import com.example.web.util.IdempotencyStatus;
+import com.example.web.service.inter.IdempotencyService;
+import lombok.extern.slf4j.Slf4j;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -35,6 +42,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class OrderServiceImpl implements OrderService {
  
     private final OrderRepository orderRepository;
@@ -47,10 +55,41 @@ public class OrderServiceImpl implements OrderService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final OrderMapper orderMapper;
     private final CartRedisService cartRedisService;
+    private final IdempotencyService idempotencyService;
 
     @Override
     @Transactional
-    public OrderResponse createOrder(CreateOrderRequest request) {
+    public OrderResponse createOrder(CreateOrderRequest request, String idempotencyKey) {
+
+        if (idempotencyKey == null || idempotencyKey.trim().isEmpty()) {
+            throw new MissingIdempotencyKeyException("Idempotency-Key header is required");
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentEmail = authentication != null ? authentication.getName() : "unknown";
+
+        IdempotencyRecord existingRecord = idempotencyService.get(idempotencyKey);
+        if (existingRecord != null) {
+            if (IdempotencyStatus.PROCESSING.equals(existingRecord.getStatus())) {
+                log.warn("DUPLICATE_PROCESSING - userId: {}, idempotencyKey: {}", currentEmail, idempotencyKey);
+                throw new OrderProcessingException("Order creation is already in progress.");
+            } else if (IdempotencyStatus.SUCCESS.equals(existingRecord.getStatus())) {
+                log.info("RETRY_SUCCESS - userId: {}, idempotencyKey: {}, orderId: {}", currentEmail, idempotencyKey, existingRecord.getOrderId());
+                return getOrder(existingRecord.getOrderId());
+            } else if (IdempotencyStatus.FAILED.equals(existingRecord.getStatus())) {
+                idempotencyService.retryProcessing(idempotencyKey);
+                log.info("START_PROCESSING (Retry) - userId: {}, idempotencyKey: {}", currentEmail, idempotencyKey);
+            }
+        } else {
+            boolean isProcessing = idempotencyService.startProcessing(idempotencyKey);
+            if (!isProcessing) {
+                log.warn("DUPLICATE_PROCESSING - userId: {}, idempotencyKey: {}", currentEmail, idempotencyKey);
+                throw new OrderProcessingException("Order creation is already in progress.");
+            }
+            log.info("START_PROCESSING - userId: {}, idempotencyKey: {}", currentEmail, idempotencyKey);
+        }
+
+        try {
 
         if (request == null) {
             throw new BadRequestException("Order request cannot be null");
@@ -66,10 +105,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException("Address is required");
         }
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
-
-        String email = authentication.getName();
+        String email = currentEmail;
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() ->
@@ -150,6 +186,8 @@ public class OrderServiceImpl implements OrderService {
 
         List<OrderItem> orderItems = new ArrayList<>();
 
+
+
         /*
         * Create OrderItem
         */
@@ -183,6 +221,8 @@ public class OrderServiceImpl implements OrderService {
 
         order = orderRepository.save(order);
 
+        final Long orderId = order.getId();
+
         /*
         * Delete Cart DB
         * (Cart phải có cascade remove xuống CartItem)
@@ -201,11 +241,20 @@ public class OrderServiceImpl implements OrderService {
                             @Override
                             public void afterCommit() {
                                 cartRedisService.clearCart(userId);
+                                idempotencyService.markSuccess(idempotencyKey, orderId);
+                                log.info("SUCCESS - userId: {}, idempotencyKey: {}, orderId: {}", currentEmail, idempotencyKey, orderId);
                             }
                         }
                 );
 
-        return orderMapper.toResponse(order);
+            
+
+            return orderMapper.toResponse(order);
+        } catch (Exception e) {
+            idempotencyService.markFailed(idempotencyKey);
+            log.error("FAILED - userId: {}, idempotencyKey: {}, error: {}", currentEmail, idempotencyKey, e.getMessage());
+            throw e;
+        }
     }
 
     @Override

@@ -1,12 +1,5 @@
 package com.example.web.service.imple;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -15,21 +8,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.web.dto.cart.bycache.CartByCacheResponse;
 import com.example.web.dto.cart.request.AddToCartRequest;
 import com.example.web.dto.cart.request.RemoveFromCartRequest;
-import com.example.web.dto.cart.response.CartItemResponse;
-import com.example.web.dto.cart.response.CartResponse;
-import com.example.web.entity.Cart;
-import com.example.web.entity.CartItem;
-import com.example.web.entity.Product;
 import com.example.web.entity.User;
 import com.example.web.exception.BadRequestException;
-import com.example.web.exception.InsufficientStockException;
 import com.example.web.exception.ResourceNotFoundException;
 import com.example.web.mapper.CartMapper;
 import com.example.web.repository.CartItemRepository;
 import com.example.web.repository.CartRepository;
 import com.example.web.repository.ProductRepository;
 import com.example.web.repository.UserRepository;
-import com.example.web.service.inter.AuthService;
 import com.example.web.service.inter.CartRedisService;
 import com.example.web.service.inter.CartService;
 
