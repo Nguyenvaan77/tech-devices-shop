@@ -12,6 +12,8 @@ import com.example.web.repository.OrderRepository;
 import com.example.web.repository.PaymentRepository;
 import com.example.web.util.OrderStatus;
 import com.example.web.util.PaymentStatus;
+import org.springframework.context.ApplicationEventPublisher;
+import com.example.web.event.OrderExpiredEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class PaymentExpirationJob {
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Scheduled(cron = "0 */5 * * * *")
     @Transactional
@@ -44,7 +47,13 @@ public class PaymentExpirationJob {
                 }
             });
             
-            log.info("Expired payment for order: {}", order.getId());
+            eventPublisher.publishEvent(new OrderExpiredEvent(
+                    order.getId(),
+                    order.getId().toString(),
+                    order.getUser().getId(),
+                    LocalDateTime.now()
+            ));
+            log.info("EVENT_PUBLISHED - OrderExpiredEvent for order: {}", order.getId());
         }
     }
 }

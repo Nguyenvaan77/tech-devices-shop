@@ -5,6 +5,7 @@ import com.example.web.dto.auth.RegisterRequest;
 import com.example.web.dto.user.request.UpdateUserRequest;
 import com.example.web.dto.user.response.UserResponse;
 import com.example.web.entity.Address;
+import com.example.web.entity.Role;
 import com.example.web.entity.User;
 import com.example.web.exception.BadRequestException;
 import com.example.web.exception.ConflictException;
@@ -12,8 +13,10 @@ import com.example.web.exception.ResourceNotFoundException;
 import com.example.web.exception.redis.RedisException;
 import com.example.web.mapper.UserMapper;
 import com.example.web.repository.AddressRepository;
+import com.example.web.repository.RoleRepository;
 import com.example.web.repository.UserRepository;
 import com.example.web.service.inter.UserService;
+import com.example.web.util.RoleEnum;
 
 import ch.qos.logback.classic.Logger;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +29,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +46,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RoleRepository roleRepository;
 
     
 
@@ -93,6 +99,10 @@ public class UserServiceImpl implements UserService {
 
         User user = userMapper.toEntity(request);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        Set<Role> roles = new HashSet<>();
+        Role defaultRole = roleRepository.findByRoleName(RoleEnum.CUSTOMER).orElse(null);
+        roles.add(defaultRole);
+        user.setRoles(roles);
         user = userRepository.save(user);
 
         return userMapper.toResponse(user);

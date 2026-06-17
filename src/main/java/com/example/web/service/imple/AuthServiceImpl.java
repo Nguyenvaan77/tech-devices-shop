@@ -6,11 +6,17 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
+import javax.print.attribute.HashPrintServiceAttributeSet;
 import javax.sound.midi.InvalidMidiDataException;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.hibernate.grammars.hql.HqlParser.SecondContext;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,10 +27,12 @@ import com.example.web.dto.auth.LoginRequest;
 import com.example.web.dto.auth.reset.ResetPasswordRequest;
 import com.example.web.dto.oauth2.OAuth2UserInfo;
 import com.example.web.entity.OAuthAccount;
+import com.example.web.entity.Role;
 import com.example.web.entity.Token;
 import com.example.web.entity.User;
 import com.example.web.exception.ResourceNotFoundException;
 import com.example.web.repository.OAuthAccountRepository;
+import com.example.web.repository.RoleRepository;
 import com.example.web.repository.TokenRepository;
 import com.example.web.repository.UserRepository;
 import com.example.web.service.inter.AuthService;
@@ -33,6 +41,7 @@ import com.example.web.service.inter.JwtService;
 import com.example.web.service.inter.OAuth2Service;
 import com.example.web.service.inter.TokenService;
 import com.example.web.util.AuthProvider;
+import com.example.web.util.RoleEnum;
 import com.example.web.util.TokenEnum;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 
@@ -62,7 +71,7 @@ public class AuthServiceImpl implements AuthService {
 
     private final OAuthAccountRepository oAuthAccountRepository;
     private final OAuth2Service oAuth2Service;
-
+    private final RoleRepository roleRepository;
 
 
     @Override
@@ -111,6 +120,10 @@ public class AuthServiceImpl implements AuthService {
                     User newUser = new User();
                     newUser.setEmail(email);
                     newUser.setFullName(name);
+                    Role defaulRole = roleRepository.findByRoleName(RoleEnum.CUSTOMER).orElse(null);
+                    Set<Role> roles = new HashSet<>();
+                    roles.add(defaulRole);
+                    newUser.setRoles(roles);
                     return userRepository.save(newUser);
                 });
 
