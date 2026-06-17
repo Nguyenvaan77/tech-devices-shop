@@ -1,0 +1,3 @@
+2026-06-19 11:34:14 INFO  com.example.web.controller.EmailWebhookController - Received SendGrid Webhook with 2 events
+2026-06-19 11:34:14 INFO  com.example.web.controller.EmailWebhookController - Cập nhật trạng thái EmailLog 11 thành delivered
+2026-06-19 11:34:14 INFO  com.example.web.controller.EmailWebhookController - Cập nhật trạng thái EmailLog 11 thành processed

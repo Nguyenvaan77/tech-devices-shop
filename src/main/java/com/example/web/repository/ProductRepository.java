@@ -1,13 +1,18 @@
 package com.example.web.repository;
 
 import com.example.web.entity.Product;
+
+import jakarta.persistence.LockModeType;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
@@ -26,4 +31,11 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Query("SELECT p FROM Product p WHERE p.quantityInStock < :threshold AND p.isDeleted = false")
     List<Product> findLowStockProducts(@Param("threshold") Integer threshold);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+        select p
+        from Product p
+        where p.id = :id
+    """)
+    Optional<Product> findByIdWithLock(Long id);
 }

@@ -8,12 +8,17 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "products")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "products", indexes = {
+    @Index(name = "idx_product_category", columnList = "category_id"),
+    @Index(name = "idx_product_business_owner", columnList = "business_owner_id"),
+    @Index(name = "idx_product_status_qty", columnList = "is_deleted, quantity_in_stock"),
+    @Index(name = "idx_product_status_price", columnList = "is_deleted, price")
+})
 public class Product {
 
     @Id

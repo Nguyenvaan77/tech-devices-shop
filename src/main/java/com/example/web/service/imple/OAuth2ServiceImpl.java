@@ -53,6 +53,8 @@ public class OAuth2ServiceImpl implements OAuth2Service{
         try {
         JWTClaimsSet claims = jwtProcessor.process(idToken, null);
 
+        
+
         // ===== VALIDATION =====
 
         // 1. issuer

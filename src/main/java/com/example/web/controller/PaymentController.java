@@ -1,19 +1,23 @@
 package com.example.web.controller;
 
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.web.config.VnpayConfig;
 import com.example.web.dto.ApiResponse;
 import com.example.web.dto.payment.PaymentIpnResponse;
 import com.example.web.dto.payment.PaymentReturnResponse;
 import com.example.web.dto.payment.PaymentUrlResponse;
 import com.example.web.service.inter.PaymentService;
-import com.example.web.config.VnpayConfig;
-import com.example.web.util.VnpayUtils;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -21,7 +25,6 @@ import java.util.Map;
 public class PaymentController {
 
     private final PaymentService paymentService;
-    private final VnpayConfig vnpayConfig;
 
     @PostMapping("/vnpay/{orderId}")
     public ResponseEntity<ApiResponse<PaymentUrlResponse>> createPayment(@PathVariable Long orderId) {
