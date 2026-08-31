@@ -236,16 +236,10 @@ public class OrderServiceImpl implements OrderService {
 
         final Long orderId = order.getId();
 
-        /*
-        * Delete Cart DB
-        * (Cart phải có cascade remove xuống CartItem)
-        */
+
         cartRepository.findByUserId(user.getId())
                 .ifPresent(cartRepository::delete);
 
-        /*
-        * Delete Redis AFTER COMMIT
-        */
         Long userId = user.getId();
 
         TransactionSynchronizationManager
@@ -259,8 +253,6 @@ public class OrderServiceImpl implements OrderService {
                             }
                         }
                 );
-
-            
 
             return orderMapper.toResponse(order);
         } catch (Exception e) {

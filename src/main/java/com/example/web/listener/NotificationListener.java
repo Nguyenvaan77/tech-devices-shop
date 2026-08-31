@@ -23,7 +23,7 @@ public class NotificationListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentSuccess(PaymentSuccessEvent event) {
-        log.info("NOTIFICATION_EVENT_RECEIVED - PaymentSuccessEvent for orderId: {}", event.orderId());
+        log.info("NOTIFICATION_EVENT_RECEIVED - PaymentSuccessEvent cho orderId: {}", event.orderId());
         saveNotification(
                 event.userId(),
                 "Thanh toán thành công",
@@ -35,7 +35,7 @@ public class NotificationListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentFailed(PaymentFailedEvent event) {
-        log.info("NOTIFICATION_EVENT_RECEIVED - PaymentFailedEvent for orderId: {}", event.orderId());
+        log.info("NOTIFICATION_EVENT_RECEIVED - PaymentFailedEvent cho orderId: {}", event.orderId());
         saveNotification(
                 event.userId(),
                 "Thanh toán thất bại",
@@ -47,7 +47,7 @@ public class NotificationListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderExpired(OrderExpiredEvent event) {
-        log.info("NOTIFICATION_EVENT_RECEIVED - OrderExpiredEvent for orderId: {}", event.orderId());
+        log.info("NOTIFICATION_EVENT_RECEIVED - OrderExpiredEvent cho  orderId: {}", event.orderId());
         saveNotification(
                 event.userId(),
                 "Đơn hàng hết hạn",
@@ -59,7 +59,7 @@ public class NotificationListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleInsufficientStock(InsufficientStockEvent event) {
-        log.info("NOTIFICATION_EVENT_RECEIVED - InsufficientStockEvent for productId: {}", event.productId());
+        log.info("NOTIFICATION_EVENT_RECEIVED - InsufficientStockEvent cho  productId: {}", event.productId());
         saveNotification(
                 event.userId(),
                 "Không đủ tồn kho",
@@ -71,7 +71,7 @@ public class NotificationListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleOrderCancelled(OrderCancelledEvent event) {
-        log.info("NOTIFICATION_EVENT_RECEIVED - OrderCancelledEvent for orderId: {}", event.orderId());
+        log.info("NOTIFICATION_EVENT_RECEIVED - OrderCancelledEvent cho orderId: {}", event.orderId());
         saveNotification(
                 event.userId(),
                 "Đơn hàng đã bị hủy",
@@ -92,9 +92,9 @@ public class NotificationListener {
                     .build();
 
             notificationRepository.save(notification);
-            log.info("NOTIFICATION_CREATED_SUCCESS - type: {}", type);
+            log.info("NOTIFICATION_CREATED_SUCCESS {}", type);
         } catch (Exception e) {
-            log.error("NOTIFICATION_CREATED_FAILED - type: {}, Error: {}", type, e.getMessage());
+            log.error("NOTIFICATION_CREATED_FAILED {}, Error {}", type, e.getMessage());
         }
     }
 }

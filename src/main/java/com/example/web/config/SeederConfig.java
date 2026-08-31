@@ -152,11 +152,12 @@ public class SeederConfig {
                     oAuthAccountRepository.save(oauth);
 
                     EmailLog log = EmailLog.builder()
-                            .email(user.getEmail())
+                            .orderId(1L)
+                            .recipient(user.getEmail())
                             .subject("Welcome to Tech Shop " + i)
-                            .status("SENT")
+                            .status(EmailStatus.SENT)
                             .sentAt(LocalDateTime.now())
-                            .user(user)
+                            .createdAt(LocalDateTime.now())
                             .build();
                     emailLogRepository.save(log);
 

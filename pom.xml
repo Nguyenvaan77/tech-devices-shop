@@ -92,6 +92,13 @@
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 
+		<!-- SendGrid Java SDK -->
+		<dependency>
+			<groupId>com.sendgrid</groupId>
+			<artifactId>sendgrid-java</artifactId>
+			<version>4.10.1</version>
+		</dependency>
+
 		<!-- Redis Cache -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

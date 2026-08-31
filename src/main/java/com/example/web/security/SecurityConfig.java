@@ -36,6 +36,7 @@ public class SecurityConfig {
             "/oauth/**",
             "/api/payments/vnpay-ipn",
             "/api/payments/vnpay-return",
+            "/api/webhooks/**",
             "/actuator/**",
             "/actuator"};
 

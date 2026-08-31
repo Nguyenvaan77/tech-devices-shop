@@ -246,7 +246,8 @@ public class PaymentServiceImpl implements PaymentService {
             // Deduct Inventory
             if (order.getItems() != null) {
                 for (OrderItem item : order.getItems()) {
-                    Product product = item.getProduct();
+                    // Product product = item.getProduct();
+                    Product product = productRepository.findByIdWithLock(item.getProduct().getId()).get();
                     int newStock = product.getQuantityInStock() - item.getQuantity();
                     if(newStock < 0) newStock = 0;
                     product.setQuantityInStock(newStock);

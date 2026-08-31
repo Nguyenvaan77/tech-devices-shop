@@ -1,0 +1,24 @@
+<configuration>
+
+    <appender name="SENDGRID_WEBHOOK_FILE"
+              class="ch.qos.logback.core.FileAppender">
+
+        <file>logs/sengridwebhook.log</file>
+
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %-5level %logger - %msg%n
+            </pattern>
+        </encoder>
+
+    </appender>
+
+    <logger name="com.example.web.controller.EmailWebhookController"
+            level="INFO"
+            additivity="false">
+
+        <appender-ref ref="SENDGRID_WEBHOOK_FILE"/>
+
+    </logger>
+
+</configuration>
