@@ -28,6 +28,9 @@ import com.example.web.exception.OrderProcessingException;
 import com.example.web.dto.order.IdempotencyRecord;
 import com.example.web.util.IdempotencyStatus;
 import com.example.web.service.inter.IdempotencyService;
+import org.springframework.context.ApplicationEventPublisher;
+import com.example.web.event.InsufficientStockEvent;
+import com.example.web.event.OrderCancelledEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -56,6 +59,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private final CartRedisService cartRedisService;
     private final IdempotencyService idempotencyService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -159,6 +163,15 @@ public class OrderServiceImpl implements OrderService {
             if (product.getQuantityInStock()
                     < item.getQuantity()) {
 
+                eventPublisher.publishEvent(new InsufficientStockEvent(
+                        user.getId(),
+                        product.getId(),
+                        product.getName(),
+                        item.getQuantity(),
+                        product.getQuantityInStock()
+                ));
+                log.info("EVENT_PUBLISHED - InsufficientStockEvent for productId: {}", product.getId());
+
                 throw new InsufficientStockException(
                         "Not enough stock for product: "
                                 + product.getName()
@@ -223,16 +236,10 @@ public class OrderServiceImpl implements OrderService {
 
         final Long orderId = order.getId();
 
-        /*
-        * Delete Cart DB
-        * (Cart phải có cascade remove xuống CartItem)
-        */
+
         cartRepository.findByUserId(user.getId())
                 .ifPresent(cartRepository::delete);
 
-        /*
-        * Delete Redis AFTER COMMIT
-        */
         Long userId = user.getId();
 
         TransactionSynchronizationManager
@@ -246,8 +253,6 @@ public class OrderServiceImpl implements OrderService {
                             }
                         }
                 );
-
-            
 
             return orderMapper.toResponse(order);
         } catch (Exception e) {
@@ -299,6 +304,16 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(OrderStatus.CANCELLED.name());
         Order updated = orderRepository.save(order);
+
+        eventPublisher.publishEvent(new OrderCancelledEvent(
+                updated.getId(),
+                updated.getId().toString(),
+                updated.getUser().getId(),
+                "User or Admin requested cancellation",
+                LocalDateTime.now()
+        ));
+        log.info("EVENT_PUBLISHED - OrderCancelledEvent for orderId: {}", updated.getId());
+
         return orderMapper.toResponse(updated);
     }
 

@@ -23,6 +23,9 @@ import com.example.web.service.inter.PaymentService;
 import com.example.web.util.OrderStatus;
 import com.example.web.util.PaymentStatus;
 import com.example.web.util.VnpayUtils;
+import org.springframework.context.ApplicationEventPublisher;
+import com.example.web.event.PaymentSuccessEvent;
+import com.example.web.event.PaymentFailedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,6 +53,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final CartRedisService cartRedisService;
     private final UserRepository userRepository;
     private final VnpayConfig vnpayConfig;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -242,7 +246,8 @@ public class PaymentServiceImpl implements PaymentService {
             // Deduct Inventory
             if (order.getItems() != null) {
                 for (OrderItem item : order.getItems()) {
-                    Product product = item.getProduct();
+                    // Product product = item.getProduct();
+                    Product product = productRepository.findByIdWithLock(item.getProduct().getId()).get();
                     int newStock = product.getQuantityInStock() - item.getQuantity();
                     if(newStock < 0) newStock = 0;
                     product.setQuantityInStock(newStock);
@@ -259,9 +264,30 @@ public class PaymentServiceImpl implements PaymentService {
                 log.error("Failed to delete cart", e);
             }
 
+            eventPublisher.publishEvent(new PaymentSuccessEvent(
+                    order.getId(),
+                    order.getId().toString(),
+                    order.getUser().getId(),
+                    order.getUser().getEmail(),
+                    order.getUser().getFullName(),
+                    order.getTotalPrice(),
+                    payment.getPaymentMethod(),
+                    LocalDateTime.now()
+            ));
+            log.info("EVENT_PUBLISHED - PaymentSuccessEvent for orderId: {}", order.getId());
+
         } else {
             payment.setStatus(PaymentStatus.FAILED.name());
             log.info("Payment Failed");
+
+            eventPublisher.publishEvent(new PaymentFailedEvent(
+                    order.getId(),
+                    order.getId().toString(),
+                    order.getUser().getId(),
+                    "VNPAY Response Code: " + responseCode,
+                    LocalDateTime.now()
+            ));
+            log.info("EVENT_PUBLISHED - PaymentFailedEvent for orderId: {}", order.getId());
         }
 
         paymentRepository.save(payment);

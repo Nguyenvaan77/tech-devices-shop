@@ -8,10 +8,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.web.entity.Order;
+import com.example.web.entity.OrderItem;
+import com.example.web.entity.Product;
 import com.example.web.repository.OrderRepository;
 import com.example.web.repository.PaymentRepository;
+import com.example.web.repository.ProductRepository;
 import com.example.web.util.OrderStatus;
 import com.example.web.util.PaymentStatus;
+import org.springframework.context.ApplicationEventPublisher;
+import com.example.web.event.OrderExpiredEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentExpirationJob {
 
     private final OrderRepository orderRepository;
+    private final ProductRepository productRepository;
     private final PaymentRepository paymentRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Scheduled(cron = "0 */5 * * * *")
     @Transactional
@@ -36,15 +43,30 @@ public class PaymentExpirationJob {
             order.setStatus(OrderStatus.CANCELLED.name());
             orderRepository.save(order);
 
-            paymentRepository.findByOrderId(order.getId()).ifPresent(payment -> {
+            paymentRepository.findByOrderIdWithLock(order.getId()).ifPresent(payment -> {
                 if (PaymentStatus.PENDING.name().equals(payment.getStatus())) {
                     payment.setStatus(PaymentStatus.EXPIRED.name());
                     payment.setUpdatedAt(LocalDateTime.now());
                     paymentRepository.save(payment);
                 }
             });
+
+            // restore quantity stock
+            for (OrderItem item : order.getItems()) {
+                Product product = productRepository.findByIdWithLock(item.getProduct().getId()).get();
+
+                product.setQuantityInStock(
+                    product.getQuantityInStock() + item.getQuantity()
+                );
+            }
             
-            log.info("Expired payment for order: {}", order.getId());
+            eventPublisher.publishEvent(new OrderExpiredEvent(
+                    order.getId(),
+                    order.getId().toString(),
+                    order.getUser().getId(),
+                    LocalDateTime.now()
+            ));
+            log.info("EVENT_PUBLISHED - OrderExpiredEvent for order: {}", order.getId());
         }
     }
 }
