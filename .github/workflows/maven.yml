@@ -38,8 +38,14 @@ jobs:
     - name: Build with Maven
       run: mvn clean package -DskipTests
     - name: Start services
+      env:
+        GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       run: docker compose up -d --build
     - name: Build Docker Compose
+      env:
+        GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       run: docker compose build
     - name: Push Docker image
       run: docker compose push
