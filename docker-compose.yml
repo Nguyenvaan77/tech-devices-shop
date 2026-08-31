@@ -39,6 +39,7 @@ services:
     volumes:
       - ./minio-data:/data
   app:
+    image: nguyenvanan77/tech-device-shop
     build: .
     container_name: app
     restart: always
