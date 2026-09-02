@@ -213,7 +213,7 @@ void increaseStock(Long productId, int quantity);
 
 ## 🔧 Build Verification
 
-### Build Results
+### Build Results 
 ```
 [INFO] Compiling 189 source files with javac [debug release 21]
 [INFO] 
