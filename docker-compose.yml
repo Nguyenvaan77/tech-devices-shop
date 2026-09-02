@@ -56,8 +56,7 @@ services:
     volumes:  
       - ./minio-data:/data  
   app:  
-    image: nguyenvanan77/tech-device-shop:latest  
-    build: .  
+    image: nguyenvanan77/tech-device-shop:latest
     container_name: app  
     restart: always  
     ports:  
