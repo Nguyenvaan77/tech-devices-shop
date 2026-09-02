@@ -39,3 +39,6 @@ docs/
 redis-data/
 mysql-data/
 minio-data/
+
+# Log
+logs

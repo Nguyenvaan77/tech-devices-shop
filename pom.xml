@@ -170,12 +170,7 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- Test -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
+
 
 		<dependency>
 			<groupId>org.springdoc</groupId>
@@ -193,13 +188,6 @@
 			<groupId>com.nimbusds</groupId>
 			<artifactId>nimbus-jose-jwt</artifactId>
 			<version>9.37</version>
-		</dependency>
-
-		<!-- Elasticsearch Java Client (chính thức) -->
-		<dependency>
-			<groupId>co.elastic.clients</groupId>
-			<artifactId>elasticsearch-java</artifactId>
-			<version>8.13.4</version>
 		</dependency>
 
 		<!-- JSON mapper (cần thiết) -->
