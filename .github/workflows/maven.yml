@@ -37,11 +37,24 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn clean package -DskipTests
-    - name: Start services
-      env:
-        GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-        GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-      run: docker compose up -d --build
+    - name: Build Backend API 
+      run: docker compose build app
+    - name: Start Service
+      run: docker compose up -d
+    - name: Check Health Backend API
+      run: |
+        for i in {1..5}; do
+          status=$(curl -s http://localhost:8080/actuator/health | jq -r '.status')
+          echo "Attempt $i/5: $status"
+    
+          if [ "$status" = "UP" ]; then
+            exit 0
+          fi
+    
+          sleep 5
+        done
+        exit 1
+
     - name: Push Docker image
       run: docker compose push
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
