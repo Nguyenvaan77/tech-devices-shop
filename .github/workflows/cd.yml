@@ -12,23 +12,89 @@ jobs:
     steps:
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@v1.2.0
+
+        env:
+          # =========================
+          # Secrets
+          # =========================
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          JWT_REFRESH_KEY: ${{ secrets.JWT_REFRESH_KEY }}
+          JWT_RESET_PASSWORD_KEY: ${{ secrets.JWT_RESET_PASSWORD_KEY }}
+
+          MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+
+          VNPAY_SECRET_KEY: ${{ secrets.VNPAY_SECRET_KEY }}
+
+          # =========================
+          # Variables
+          # =========================
+          MYSQL_DATABASE: ${{ vars.MYSQL_DATABASE }}
+          MYSQL_USERNAME: ${{ vars.MYSQL_USERNAME }}
+          MYSQL_PORT: ${{ vars.MYSQL_PORT }}
+
+          REDIS_HOST: ${{ vars.REDIS_HOST }}
+          REDIS_PORT: ${{ vars.REDIS_PORT }}
+
+          JWT_EXPIRY_DAY: ${{ vars.JWT_EXPIRY_DAY }}
+          JWT_EXPIRY_HOUR: ${{ vars.JWT_EXPIRY_HOUR }}
+          JWT_EXPIRY_MINUTE: ${{ vars.JWT_EXPIRY_MINUTE }}
+          JWT_ISSUER: ${{ vars.JWT_ISSUER }}
+
+          MINIO_ACCESS_KEY: ${{ vars.MINIO_ACCESS_KEY }}
+          MINIO_BUCKET_IMAGES: ${{ vars.MINIO_BUCKET_IMAGES }}
+          MINIO_BUCKET_VIDEO: ${{ vars.MINIO_BUCKET_VIDEO }}
+          MINIO_URL: ${{ vars.MINIO_URL }}
+
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          GOOGLE_REDIRECT_URI: ${{ vars.GOOGLE_REDIRECT_URI }}
+          GOOGLE_SCOPE: ${{ vars.GOOGLE_SCOPE }}
+
+          VNPAY_TMN_CODE: ${{ vars.VNPAY_TMN_CODE }}
+          VNPAY_PAY_URL: ${{ vars.VNPAY_PAY_URL }}
+          VNPAY_RETURN_URL: ${{ vars.VNPAY_RETURN_URL }}
+          VNPAY_IPN_URL: ${{ vars.VNPAY_IPN_URL }}
+
+          SENDGRID_API_KEY: ${{ vars.SENDGRID_API_KEY }}
+          SENDGRID_SENDER_EMAIL: ${{ vars.SENDGRID_SENDER_EMAIL }}
+          SENDGRID_SENDER_NAME: ${{ vars.SENDGRID_SENDER_NAME }}
+
         with:
           host: ${{ vars.EC2_HOST }}
           username: ${{ vars.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
 
+          # Truyền các biến env ở trên sang EC2
+          envs: MYSQL_PASSWORD,REDIS_PASSWORD,JWT_SECRET_KEY,JWT_REFRESH_KEY,JWT_RESET_PASSWORD_KEY,MINIO_SECRET_KEY,GOOGLE_CLIENT_SECRET,VNPAY_SECRET_KEY,MYSQL_DATABASE,MYSQL_USERNAME,MYSQL_PORT,REDIS_HOST,REDIS_PORT,JWT_EXPIRY_DAY,JWT_EXPIRY_HOUR,JWT_EXPIRY_MINUTE,JWT_ISSUER,MINIO_ACCESS_KEY,MINIO_BUCKET_IMAGES,MINIO_BUCKET_VIDEO,MINIO_URL,GOOGLE_CLIENT_ID,GOOGLE_REDIRECT_URI,GOOGLE_SCOPE,VNPAY_TMN_CODE,VNPAY_PAY_URL,VNPAY_RETURN_URL,VNPAY_IPN_URL,SENDGRID_API_KEY,SENDGRID_SENDER_EMAIL,SENDGRID_SENDER_NAME
+
           script: |
-            # Đi tới thư mục home
+            set -e
+
+            echo "========================================="
+            echo "Deploying application to AWS EC2"
+            echo "========================================="
+
+            # ========================================
+            # 1. Đi tới thư mục home
+            # ========================================
+
             cd ~
 
-            # Kiểm tra project đã tồn tại chưa
-            if [ -d "tech-device-shop/.git" ]; then
+            # ========================================
+            # 2. Clone hoặc update repository
+            # ========================================
+
+            if [ -d "tech-devices-shop/.git" ]; then
 
               echo "Repository already exists."
               echo "Pull latest code from main..."
 
-              cd ~/tech-device-shop
+              cd ~/tech-devices-shop
 
               git fetch origin
               git checkout main
@@ -39,20 +105,101 @@ jobs:
               echo "Repository does not exist."
               echo "Cloning repository..."
 
-              git clone https://github.com/Nguyenvaan77/tech-devices-shop.git ~/tech-device-shop
+              git clone git@github.com:Nguyenvaan77/tech-devices-shop.git ~/tech-devices-shop
 
-              cd ~/tech-device-shop
+              cd ~/tech-devices-shop
 
             fi
 
+            # ========================================
+            # 3. Hiển thị commit hiện tại
+            # ========================================
+
+            echo "========================================="
             echo "Current commit:"
             git log -1 --oneline
+            echo "========================================="
 
+            # ========================================
+            # 4. Tạo file .env
+            # ========================================
+
+            echo "Creating .env file..."
+
+            cat > .env <<EOF
+            MYSQL_PASSWORD=$MYSQL_PASSWORD
+            MYSQL_DATABASE=$MYSQL_DATABASE
+            MYSQL_USERNAME=$MYSQL_USERNAME
+            MYSQL_PORT=$MYSQL_PORT
+
+            REDIS_HOST=$REDIS_HOST
+            REDIS_PORT=$REDIS_PORT
+            REDIS_PASSWORD=$REDIS_PASSWORD
+
+            JWT_SECRET_KEY=$JWT_SECRET_KEY
+            JWT_REFRESH_KEY=$JWT_REFRESH_KEY
+            JWT_RESET_PASSWORD_KEY=$JWT_RESET_PASSWORD_KEY
+            JWT_EXPIRY_DAY=$JWT_EXPIRY_DAY
+            JWT_EXPIRY_HOUR=$JWT_EXPIRY_HOUR
+            JWT_EXPIRY_MINUTE=$JWT_EXPIRY_MINUTE
+            JWT_ISSUER=$JWT_ISSUER
+
+            MINIO_URL=$MINIO_URL
+            MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY
+            MINIO_SECRET_KEY=$MINIO_SECRET_KEY
+            MINIO_BUCKET_IMAGES=$MINIO_BUCKET_IMAGES
+            MINIO_BUCKET_VIDEO=$MINIO_BUCKET_VIDEO
+
+            GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+            GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+            GOOGLE_REDIRECT_URI=$GOOGLE_REDIRECT_URI
+            GOOGLE_SCOPE=$GOOGLE_SCOPE
+
+            VNPAY_TMN_CODE=$VNPAY_TMN_CODE
+            VNPAY_SECRET_KEY=$VNPAY_SECRET_KEY
+            VNPAY_PAY_URL=$VNPAY_PAY_URL
+            VNPAY_RETURN_URL=$VNPAY_RETURN_URL
+            VNPAY_IPN_URL=$VNPAY_IPN_URL
+
+            SENDGRID_API_KEY=$SENDGRID_API_KEY
+            SENDGRID_SENDER_EMAIL=$SENDGRID_SENDER_EMAIL
+            SENDGRID_SENDER_NAME=$SENDGRID_SENDER_NAME
+            EOF
+
+            chmod 600 .env
+
+            echo ".env created successfully."
+
+            # ========================================
+            # 5. Pull Docker images
+            # ========================================
+
+            echo "========================================="
             echo "Pull Docker images..."
+            echo "========================================="
+
             docker compose pull
 
+            # ========================================
+            # 6. Start containers
+            # ========================================
+
+            echo "========================================="
             echo "Start Docker containers..."
+            echo "========================================="
+
             docker compose up -d
 
+            # ========================================
+            # 7. Kiểm tra containers
+            # ========================================
+
+            echo "========================================="
             echo "Running containers:"
+            echo "========================================="
+
             docker compose ps
+
+            echo "========================================="
+            echo "Deployment completed successfully!"
+            echo "========================================="
