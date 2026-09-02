@@ -17,4 +17,3 @@ public class TechDeviceShopApplication {
 		SpringApplication.run(TechDeviceShopApplication.class, args);
 	}
 }
-

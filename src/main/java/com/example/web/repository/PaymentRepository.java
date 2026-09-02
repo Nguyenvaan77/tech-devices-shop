@@ -22,7 +22,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
         from Payment p
         where p.order.id = :orderId
     """)
-    Optional<Payment> findByOrderIdWithLock(Long orderId);
+    Optional<Payment> findByOrderIdWithLock(@Param("orderId") Long orderId);
 
     Optional<Payment> findByPaymentCode(String paymentCode);
 
