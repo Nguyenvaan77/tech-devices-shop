@@ -17,7 +17,7 @@ build/
 # Node.js and frontend build output
 node_modules/
 dist/
-
+modernize/
 # Local service data and logs
 logs/
 *.log
