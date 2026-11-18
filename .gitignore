@@ -1,44 +1,44 @@
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Maven and Java build output
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
+build/
 !**/src/main/**/target/
 !**/src/test/**/target/
-.env
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
 !**/src/main/**/build/
 !**/src/test/**/build/
+/backend/.mvn/wrapper/maven-wrapper.jar
 
-### VS Code ###
-.vscode/
+# Node.js and frontend build output
+node_modules/
+dist/
 
-### DB
-db/
-docs/
+# Local service data and logs
+logs/
+*.log
 redis-data/
 mysql-data/
 minio-data/
 
-# Log
-logs
+# IDE files
+.vscode/
+.idea/
+*.iws
+*.iml
+*.ipr
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+/backend/nbproject/private/
+/backend/nbbuild/
+/backend/nbdist/
+/backend/.nb-gradle/
