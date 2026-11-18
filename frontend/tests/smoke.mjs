@@ -13,6 +13,7 @@ const result = await build({
   platform: 'node',
   format: 'cjs',
   external: ['react'],
+  loader: { '.scss': 'empty' },
 });
 const compiled = { exports: {} };
 const run = vm.runInThisContext(`(function(require, module, exports) { ${result.outputFiles[0].text}\n})`);

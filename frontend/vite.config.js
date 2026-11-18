@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+  css: {
+    preprocessorOptions: {
+      scss: { api: 'modern' },
+    },
+  },
   server: {
     proxy: {
       '/api': 'http://localhost:8080',

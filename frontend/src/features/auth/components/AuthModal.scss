@@ -1,0 +1,47 @@
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+
+  button {
+    background: none;
+    border: 0;
+    padding: 12px 18px;
+    color: #94a095;
+    font-weight: 700;
+
+    &.active {
+      color: #2e573c;
+      border-bottom: 2px solid #2e573c;
+    }
+  }
+}
+
+.dialog form label {
+  display: block;
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 15px;
+}
+
+.dialog form label span {
+  font-weight: 400;
+  color: #9aaa9e;
+}
+
+.dialog input {
+  width: 100%;
+  display: block;
+  margin-top: 7px;
+  border: 1px solid #dfe7dc;
+  border-radius: 5px;
+  padding: 13px;
+  outline-color: #739a6f;
+}
+
+.form-error {
+  color: #a7473c;
+  font-size: 12px;
+  min-height: 16px;
+  line-height: 1.5;
+}

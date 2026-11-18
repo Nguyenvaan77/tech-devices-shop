@@ -1,0 +1,31 @@
+.dialog {
+  border: 0;
+  border-radius: 12px;
+  width: min(460px,calc(100% - 32px));
+  padding: 32px;
+  color: var(--ink);
+  box-shadow: 0 24px 80px #1b2e2240;
+  max-height: 90vh;
+  overflow: auto;
+
+  &::backdrop {
+    background: #13251db3;
+  }
+
+  h2 {
+    font-size: 32px;
+    margin-top: 8px;
+  }
+}
+
+.dialog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.dialog-intro {
+  color: #819083;
+  line-height: 1.6;
+  margin: 13px 0 20px;
+}
