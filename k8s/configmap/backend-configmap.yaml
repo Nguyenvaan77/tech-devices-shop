@@ -1,0 +1,38 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-configmap
+data:
+  # Database
+  MYSQL_HOST: "database-service"
+  MYSQL_PORT: "3306"
+  MYSQL_DATABASE: "ecommerce_db"
+
+  # JWT
+  JWT_EXPIRY_DAY: "30"
+  JWT_EXPIRY_HOUR: "30"
+  JWT_EXPIRY_MINUTE: "30"
+  JWT_ISSUER: "tech-devices-shop"
+
+  # MinIO
+  MINIO_URL: "http://minio-service:9000"
+  MINIO_BUCKET_IMAGES: "images"
+  MINIO_BUCKET_VIDEO: "videos"
+
+  # Redis
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+
+  # Google OAuth2
+  GOOGLE_REDIRECT_URI: "http://localhost:8080/auth/oauth2/google/callback"
+  GOOGLE_SCOPE: "openid,profile,email"
+
+  # VNPay
+  VNPAY_PAY_URL: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+  VNPAY_RETURN_URL: "https://finisher-thesaurus-arose.ngrok-free.dev/api/payments/vnpay-return"
+  VNPAY_IPN_URL: "https://finisher-thesaurus-arose.ngrok-free.dev/api/payments/vnpay-ipn"
+
+  # SendGrid
+  SENDGRID_SENDER_EMAIL: "anvan16022005@gmail.com"
+  SENDGRID_SENDER_NAME: "Tech devices Admin"

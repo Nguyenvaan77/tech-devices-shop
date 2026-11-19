@@ -1,0 +1,11 @@
+.env
+.env.*
+.git
+.idea
+.vscode
+target
+logs
+*.log
+mysql-data
+redis-data
+minio-data

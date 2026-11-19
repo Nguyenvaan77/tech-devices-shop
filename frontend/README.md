@@ -16,6 +16,17 @@ API sản phẩm yêu cầu đăng nhập và hiện không trả về giá. API
 
 `npm run build` tạo bản build trong `dist/`. Khi triển khai bản build, cấu hình máy chủ reverse proxy chuyển tiếp các đường dẫn API kể trên tới backend cùng origin.
 
+## Chạy bằng Docker
+
+Từ thư mục `frontend`, build image và chạy trên cổng 8081 của máy host:
+
+```powershell
+docker build -t tech-device-frontend:local .
+docker run --rm -p 8081:80 --network backend_default -e BACKEND_HOST=app -e BACKEND_PORT=8080 tech-device-frontend:local
+```
+
+Nginx lắng nghe cổng 80 trong container và chuyển các đường dẫn `/api`, `/auth`, `/oauth` tới backend. Ví dụ trên dùng service `app` trong mạng Compose `backend_default`; nếu tên mạng hoặc backend khác, thay `--network`, `BACKEND_HOST` và `BACKEND_PORT` tương ứng. Backend và frontend phải cùng kết nối vào mạng Docker đó.
+
 ## Cấu trúc frontend
 
 - `public/`: tài nguyên tĩnh được Vite phục vụ trực tiếp. `index.html` nằm tại root frontend theo cấu trúc của Vite.
